@@ -1,6 +1,7 @@
 import Foundation
 import Security
 import OSLog
+import SwiftProxyCore
 
 /// Thread-safe Keychain wrapper for secure storage of sensitive data
 /// Provides type-safe access to keychain items with automatic encoding/decoding

@@ -142,7 +142,7 @@ public final class ProxyViewModel: ObservableObject {
                 os_log(.info, log: logger, "Connection test successful (latency: %.2fms)",
                        (result.latency ?? 0) * 1000)
             } else {
-                os_log(.warning, log: logger, "Connection test failed: %@",
+                os_log(.error, log: logger, "Connection test failed: %@",
                        result.error?.errorDescription ?? "Unknown error")
             }
         } catch let appError as AppError {
@@ -161,7 +161,7 @@ public final class ProxyViewModel: ObservableObject {
             configurations = configs.sorted { $0.name < $1.name }
         } catch {
             os_log(.error, log: logger, "Failed to load configurations: %@", error.localizedDescription)
-            error = .storageReadFailed(error.localizedDescription)
+            self.error = .storageReadFailed(error.localizedDescription)
         }
     }
 
@@ -283,7 +283,7 @@ extension ProxyViewModel {
             type: .http,
             host: "",
             port: 8080,
-            description: "New proxy configuration"
+            notes: "New proxy configuration"
         )
     }
 

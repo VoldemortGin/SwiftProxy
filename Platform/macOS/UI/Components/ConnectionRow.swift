@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftProxyCore
 
 /// Displays a single network request in a list
 /// Shows request details, status, and performance metrics

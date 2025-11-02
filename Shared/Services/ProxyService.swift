@@ -73,6 +73,30 @@ public struct SystemProxySettings {
     public let socksPort: Int?
     public let bypassDomains: [String]
 
+    public init(
+        httpEnabled: Bool,
+        httpsEnabled: Bool,
+        socksEnabled: Bool,
+        httpProxy: String?,
+        httpPort: Int?,
+        httpsProxy: String?,
+        httpsPort: Int?,
+        socksProxy: String?,
+        socksPort: Int?,
+        bypassDomains: [String]
+    ) {
+        self.httpEnabled = httpEnabled
+        self.httpsEnabled = httpsEnabled
+        self.socksEnabled = socksEnabled
+        self.httpProxy = httpProxy
+        self.httpPort = httpPort
+        self.httpsProxy = httpsProxy
+        self.httpsPort = httpsPort
+        self.socksProxy = socksProxy
+        self.socksPort = socksPort
+        self.bypassDomains = bypassDomains
+    }
+
     public var isAnyProxyEnabled: Bool {
         httpEnabled || httpsEnabled || socksEnabled
     }
