@@ -1,6 +1,6 @@
 import XCTest
 import Combine
-@testable import SwiftProxy
+@testable import SwiftProxyCore
 
 /// Unit tests for ConfigurationService
 final class ConfigurationServiceTests: XCTestCase {
@@ -8,7 +8,7 @@ final class ConfigurationServiceTests: XCTestCase {
     // MARK: - Properties
 
     var sut: ConfigurationService!
-    var mockKeychain: MockKeychain!
+    var mockKeychain: MockConfigKeychain!
     var tempDirectory: URL!
     var cancellables: Set<AnyCancellable>!
 
@@ -22,12 +22,12 @@ final class ConfigurationServiceTests: XCTestCase {
             .appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
 
-        mockKeychain = MockKeychain()
+        mockKeychain = MockConfigKeychain()
         cancellables = Set<AnyCancellable>()
 
-        // Note: In a real implementation, we would inject dependencies
-        // For now, we'll test with the default initializer
-        try sut = ConfigurationService()
+        // Create mock keychain service
+        let keychainService = MockKeychainService()
+        try sut = ConfigurationService(keychainService: keychainService)
     }
 
     override func tearDownWithError() throws {
@@ -340,7 +340,7 @@ final class ConfigurationServiceTests: XCTestCase {
 
 // MARK: - Mock Keychain
 
-class MockKeychain {
+class MockConfigKeychain {
     private var storage: [String: String] = [:]
 
     func setPassword(_ password: String, for key: String) {
@@ -353,5 +353,40 @@ class MockKeychain {
 
     func deletePassword(for key: String) {
         storage.removeValue(forKey: key)
+    }
+}
+
+// MARK: - Mock Keychain Service
+
+class MockKeychainService: KeychainServiceProtocol {
+    private var storage: [String: String] = [:]
+
+    func savePassword(_ password: String, for identifier: String) async throws {
+        storage[identifier] = password
+    }
+
+    func loadPassword(for identifier: String) async throws -> String? {
+        return storage[identifier]
+    }
+
+    func deletePassword(for identifier: String) async throws {
+        storage.removeValue(forKey: identifier)
+    }
+
+    func deleteAllPasswords() async throws {
+        storage.removeAll()
+    }
+
+    func passwordExists(for identifier: String) async -> Bool {
+        return storage[identifier] != nil
+    }
+
+    func migratePasswords(_ migrations: [String: String]) async throws {
+        for (oldIdentifier, newIdentifier) in migrations {
+            if let password = storage[oldIdentifier] {
+                storage[newIdentifier] = password
+                storage.removeValue(forKey: oldIdentifier)
+            }
+        }
     }
 }

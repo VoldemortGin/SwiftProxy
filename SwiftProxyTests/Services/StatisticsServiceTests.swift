@@ -1,6 +1,6 @@
 import XCTest
 import Combine
-@testable import SwiftProxy
+@testable import SwiftProxyCore
 
 /// Comprehensive unit tests for StatisticsService
 final class StatisticsServiceTests: XCTestCase {

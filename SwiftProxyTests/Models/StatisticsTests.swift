@@ -1,5 +1,5 @@
 import XCTest
-@testable import SwiftProxy
+@testable import SwiftProxyCore
 
 /// Comprehensive unit tests for Statistics model
 final class StatisticsTests: XCTestCase {

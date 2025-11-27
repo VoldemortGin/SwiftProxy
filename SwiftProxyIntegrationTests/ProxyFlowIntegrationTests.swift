@@ -1,6 +1,6 @@
 import XCTest
 import Network
-@testable import SwiftProxy
+@testable import SwiftProxyCore
 
 /// Comprehensive integration tests for end-to-end proxy flows
 /// Tests the complete stack: ProxyServer → ProxyConnection → Network
@@ -11,7 +11,7 @@ final class ProxyFlowIntegrationTests: XCTestCase {
 
     var proxyServer: ProxyServer!
     var proxyService: ProxyService!
-    var testConfiguration: ProxyConfiguration!
+    var testConfiguration: SwiftProxyCore.ProxyConfiguration!
 
     // Test server for making requests
     var testServerPort: Int = 0
@@ -25,7 +25,7 @@ final class ProxyFlowIntegrationTests: XCTestCase {
         testServerPort = try await startTestHTTPServer()
 
         // Create test configuration
-        testConfiguration = ProxyConfiguration(
+        testConfiguration = SwiftProxyCore.ProxyConfiguration(
             name: "Integration Test Proxy",
             type: .http,
             host: "127.0.0.1",
@@ -33,7 +33,7 @@ final class ProxyFlowIntegrationTests: XCTestCase {
         )
 
         // Initialize services
-        proxyService = ProxyService(logger: Logger.proxy)
+        proxyService = ProxyService(logger: Logger.proxyLog)
     }
 
     override func tearDown() async throws {
@@ -478,7 +478,7 @@ final class ProxyFlowIntegrationTests: XCTestCase {
             connectionPool: ConnectionPool(),
             sslHandler: SSLHandler(),
             retryHandler: RetryHandler(),
-            logger: Logger.network
+            logger: Logger.networkLog
         )
 
         return connection

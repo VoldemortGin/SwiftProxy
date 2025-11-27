@@ -1,5 +1,5 @@
 import XCTest
-@testable import SwiftProxy
+@testable import SwiftProxyCore
 
 /// Comprehensive unit tests for ProxyConfiguration model
 final class ProxyConfigurationTests: XCTestCase {
@@ -503,7 +503,7 @@ final class ProxyConfigurationTests: XCTestCase {
             bypassDomains: ["localhost"],
             proxyDNS: true,
             autoDetect: false,
-            description: "Test description"
+            notes: "Test description"
         )
 
         // When - encode

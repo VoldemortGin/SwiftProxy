@@ -1,5 +1,5 @@
 import XCTest
-@testable import SwiftProxy
+@testable import SwiftProxyCore
 
 /// Unit tests for Connection model
 final class ConnectionTests: XCTestCase {

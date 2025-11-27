@@ -82,7 +82,7 @@ public enum RuleMatchType: String, Codable {
 // MARK: - Proxy Rule
 
 /// Represents a single proxy rule
-public struct ProxyRule: Codable, Identifiable, Comparable {
+public struct ProxyRule: Codable, Identifiable, Comparable, Hashable {
     public let id: UUID
     public var name: String
     public var matchType: RuleMatchType

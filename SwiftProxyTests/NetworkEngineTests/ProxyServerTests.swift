@@ -1,16 +1,16 @@
 import XCTest
 import Network
-@testable import SwiftProxy
+@testable import SwiftProxyCore
 
 @available(macOS 12.0, *)
 final class ProxyServerTests: XCTestCase {
     var sut: ProxyServer!
-    var testConfiguration: ProxyConfiguration!
+    var testConfiguration: SwiftProxyCore.ProxyConfiguration!
 
     override func setUp() async throws {
         try await super.setUp()
 
-        testConfiguration = ProxyConfiguration(
+        testConfiguration = SwiftProxyCore.ProxyConfiguration(
             name: "Test Proxy",
             type: .http,
             host: "127.0.0.1",

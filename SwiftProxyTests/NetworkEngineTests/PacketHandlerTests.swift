@@ -1,5 +1,5 @@
 import XCTest
-@testable import SwiftProxy
+@testable import SwiftProxyCore
 
 @available(macOS 12.0, *)
 final class PacketHandlerTests: XCTestCase {
@@ -8,27 +8,36 @@ final class PacketHandlerTests: XCTestCase {
 
     override func setUp() async throws {
         try await super.setUp()
-        sut = PacketHandler()
+        // Test that initializer is public and accessible from other modules
+        sut = PacketHandler(
+            maxBufferSize: 5 * 1024 * 1024, // 5MB for tests
+            trafficShapingConfig: TrafficShapingConfig(
+                maxBytesPerSecond: 1_000_000, // 1MB/s
+                burstSize: 100_000, // 100KB
+                enablePriorityQueues: true,
+                queueCount: 3
+            )
+        )
 
         testRules = [
             ProxyRule(
                 name: "Block Facebook",
-                pattern: "facebook.com",
                 matchType: .domainSuffix,
+                pattern: "facebook.com",
                 action: .reject,
                 priority: 10
             ),
             ProxyRule(
                 name: "Proxy Google",
-                pattern: "google.com",
                 matchType: .domainSuffix,
+                pattern: "google.com",
                 action: .proxy,
                 priority: 5
             ),
             ProxyRule(
                 name: "Direct Local",
-                pattern: "192.168.0.0/16",
                 matchType: .ipCIDR,
+                pattern: "192.168.0.0/16",
                 action: .direct,
                 priority: 20
             )
@@ -151,8 +160,8 @@ final class PacketHandlerTests: XCTestCase {
         // Given
         let newRule = ProxyRule(
             name: "Block Twitter",
-            pattern: "twitter.com",
             matchType: .domainSuffix,
+            pattern: "twitter.com",
             action: .reject
         )
 
@@ -185,27 +194,236 @@ final class PacketHandlerTests: XCTestCase {
         let connectionID = UUID()
         let packet = createMockIPv4Packet()
 
-        // When
-        await sut.bufferPacket(packet, connectionID: connectionID)
+        // When - bufferPacket now requires try await
+        try await sut.bufferPacket(packet, connectionID: connectionID, sequenceNumber: 1)
 
         // Then
         let buffered = await sut.getBufferedPackets(for: connectionID)
-        XCTAssertNotNil(buffered)
-        XCTAssertEqual(buffered?.count, 1)
+        XCTAssertEqual(buffered.count, 1)
+        XCTAssertEqual(buffered.first, packet)
+    }
+
+    func testBufferMultiplePacketsInOrder() async throws {
+        let connectionID = UUID()
+        let packet1 = Data([0x01, 0x02])
+        let packet2 = Data([0x03, 0x04])
+        let packet3 = Data([0x05, 0x06])
+
+        // Add packets in order
+        try await sut.bufferPacket(packet1, connectionID: connectionID, sequenceNumber: 1)
+        try await sut.bufferPacket(packet2, connectionID: connectionID, sequenceNumber: 2)
+        try await sut.bufferPacket(packet3, connectionID: connectionID, sequenceNumber: 3)
+
+        let bufferedPackets = await sut.getBufferedPackets(for: connectionID)
+        XCTAssertEqual(bufferedPackets.count, 3)
+        XCTAssertEqual(bufferedPackets[0], packet1)
+        XCTAssertEqual(bufferedPackets[1], packet2)
+        XCTAssertEqual(bufferedPackets[2], packet3)
+    }
+
+    func testBufferPacketsOutOfOrder() async throws {
+        let connectionID = UUID()
+        let packet1 = Data([0x01, 0x02])
+        let packet2 = Data([0x03, 0x04])
+        let packet3 = Data([0x05, 0x06])
+
+        // Add packets out of order
+        try await sut.bufferPacket(packet3, connectionID: connectionID, sequenceNumber: 3)
+        try await sut.bufferPacket(packet1, connectionID: connectionID, sequenceNumber: 1)
+        try await sut.bufferPacket(packet2, connectionID: connectionID, sequenceNumber: 2)
+
+        // Should be reordered by sequence number
+        let bufferedPackets = await sut.getBufferedPackets(for: connectionID)
+        XCTAssertEqual(bufferedPackets.count, 3)
+        XCTAssertEqual(bufferedPackets[0], packet1)
+        XCTAssertEqual(bufferedPackets[1], packet2)
+        XCTAssertEqual(bufferedPackets[2], packet3)
+    }
+
+    func testGetCoalescedBuffer() async throws {
+        let connectionID = UUID()
+        let packet1 = Data([0x01, 0x02])
+        let packet2 = Data([0x03, 0x04])
+        let packet3 = Data([0x05, 0x06])
+
+        try await sut.bufferPacket(packet1, connectionID: connectionID, sequenceNumber: 1)
+        try await sut.bufferPacket(packet2, connectionID: connectionID, sequenceNumber: 2)
+        try await sut.bufferPacket(packet3, connectionID: connectionID, sequenceNumber: 3)
+
+        let coalesced = await sut.getCoalescedBuffer(for: connectionID)
+        XCTAssertNotNil(coalesced)
+
+        // Should combine all packets
+        let expected = Data([0x01, 0x02, 0x03, 0x04, 0x05, 0x06])
+        XCTAssertEqual(coalesced, expected)
     }
 
     func testClearBuffer() async throws {
         // Given
         let connectionID = UUID()
         let packet = createMockIPv4Packet()
-        await sut.bufferPacket(packet, connectionID: connectionID)
+        try await sut.bufferPacket(packet, connectionID: connectionID)
+
+        var buffered = await sut.getBufferedPackets(for: connectionID)
+        XCTAssertEqual(buffered.count, 1)
 
         // When
         await sut.clearBuffer(for: connectionID)
 
         // Then
+        buffered = await sut.getBufferedPackets(for: connectionID)
+        XCTAssertEqual(buffered.count, 0)
+    }
+
+    func testBufferSizeLimitExceeded() async throws {
+        // Create handler with small buffer
+        let smallHandler = PacketHandler(maxBufferSize: 10)
+        let connectionID = UUID()
+        let largePacket = Data(repeating: 0xFF, count: 100)
+
+        // Should throw when buffer size exceeded
+        do {
+            try await smallHandler.bufferPacket(largePacket, connectionID: connectionID)
+            XCTFail("Expected error to be thrown")
+        } catch {
+            // Expected to throw
+            XCTAssertTrue(error is AppError)
+        }
+    }
+
+    // MARK: - Traffic Shaping Tests
+
+    func testTrafficShaping() async throws {
+        let connectionID = UUID()
+
+        // Should complete without error
+        try await sut.shapeTraffic(for: connectionID, priorityClass: .high)
+        try await sut.shapeTraffic(for: connectionID, priorityClass: .normal)
+        try await sut.shapeTraffic(for: connectionID, priorityClass: .low)
+    }
+
+    func testUpdateTrafficShapingConfig() async throws {
+        let newConfig = TrafficShapingConfig(
+            maxBytesPerSecond: 500_000,
+            burstSize: 50_000,
+            enablePriorityQueues: false,
+            queueCount: 1
+        )
+
+        await sut.updateTrafficShaping(config: newConfig)
+
+        // Verify we can still use it
+        try await sut.shapeTraffic(for: UUID())
+    }
+
+    func testGetTrafficShapingStatistics() async throws {
+        let stats = await sut.getTrafficShapingStats()
+
+        XCTAssertGreaterThanOrEqual(stats.passedPackets, 0)
+        XCTAssertGreaterThanOrEqual(stats.droppedPackets, 0)
+    }
+
+    // MARK: - Packet Size Optimization Tests
+
+    func testOptimizePacketSize() async throws {
+        let connectionID = UUID()
+        let largeData = Data(repeating: 0x42, count: 5000)
+
+        let optimized = await sut.optimizePacketSize(for: connectionID, data: largeData)
+
+        // Should split into multiple packets
+        XCTAssertGreaterThan(optimized.count, 1)
+
+        // Total size should match
+        let totalSize = optimized.reduce(0) { $0 + $1.count }
+        XCTAssertEqual(totalSize, largeData.count)
+    }
+
+    func testUpdateMTU() async throws {
+        let connectionID = UUID()
+        let customMTU = 1200
+
+        await sut.updateMTU(for: connectionID, mtu: customMTU)
+
+        let optimalSize = await sut.getOptimalPacketSize(for: connectionID)
+
+        // Should account for headers (60 bytes overhead)
+        XCTAssertLessThanOrEqual(optimalSize, customMTU - 60)
+    }
+
+    func testGetOptimalPacketSize() async throws {
+        let connectionID = UUID()
+
+        let optimalSize = await sut.getOptimalPacketSize(for: connectionID)
+
+        // Default MTU is 1500, minus headers
+        XCTAssertEqual(optimalSize, 1440) // 1500 - 60
+    }
+
+    func testNagleAlgorithm() async throws {
+        let connectionID = UUID()
+
+        // Enable Nagle
+        await sut.setNagleEnabled(true, for: connectionID)
+
+        let smallData = Data([0x01, 0x02, 0x03])
+        let optimized = await sut.optimizePacketSize(for: connectionID, data: smallData)
+
+        // Small packet with Nagle enabled might be buffered (empty result)
+        // or sent immediately depending on buffer state
+        XCTAssertTrue(optimized.count <= 1)
+    }
+
+    func testNagleDisabled() async throws {
+        let connectionID = UUID()
+
+        // Disable Nagle
+        await sut.setNagleEnabled(false, for: connectionID)
+
+        let smallData = Data([0x01, 0x02, 0x03])
+        let optimized = await sut.optimizePacketSize(for: connectionID, data: smallData)
+
+        // Should send immediately
+        XCTAssertEqual(optimized.count, 1)
+        XCTAssertEqual(optimized.first, smallData)
+    }
+
+    // MARK: - Integration Tests
+
+    func testFullWorkflow() async throws {
+        let connectionID = UUID()
+
+        // 1. Configure MTU
+        await sut.updateMTU(for: connectionID, mtu: 1400)
+
+        // 2. Enable Nagle
+        await sut.setNagleEnabled(false, for: connectionID)
+
+        // 3. Create large data
+        let largeData = Data(repeating: 0x55, count: 3000)
+
+        // 4. Optimize packet sizes
+        let optimizedPackets = await sut.optimizePacketSize(for: connectionID, data: largeData)
+        XCTAssertGreaterThan(optimizedPackets.count, 0)
+
+        // 5. Buffer optimized packets
+        for (index, packet) in optimizedPackets.enumerated() {
+            try await sut.bufferPacket(packet, connectionID: connectionID, sequenceNumber: UInt32(index))
+        }
+
+        // 6. Retrieve and verify
         let buffered = await sut.getBufferedPackets(for: connectionID)
-        XCTAssertNil(buffered)
+        XCTAssertEqual(buffered.count, optimizedPackets.count)
+
+        // 7. Coalesce
+        let coalesced = await sut.getCoalescedBuffer(for: connectionID)
+        XCTAssertNotNil(coalesced)
+        XCTAssertEqual(coalesced?.count, largeData.count)
+
+        // 8. Cleanup
+        await sut.clearBuffer(for: connectionID)
+        let afterCleanup = await sut.getBufferedPackets(for: connectionID)
+        XCTAssertEqual(afterCleanup.count, 0)
     }
 
     // MARK: - Helper Methods

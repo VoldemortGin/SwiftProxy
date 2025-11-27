@@ -1,6 +1,6 @@
 import XCTest
 import Network
-@testable import SwiftProxy
+@testable import SwiftProxyCore
 
 @available(macOS 12.0, *)
 final class ConnectionPoolTests: XCTestCase {

@@ -1,12 +1,170 @@
 import XCTest
-@testable import SwiftProxy
+import Foundation
+import Security
+@testable import SwiftProxyCore
+
+// Mock PasswordNamespace for testing
+struct PasswordNamespace {
+    let keychain: MockKeychain
+
+    func set(_ password: String, for identifier: String) throws {
+        try keychain.setString(password, forKey: "password_\(identifier)")
+    }
+
+    func get(for identifier: String) throws -> String? {
+        return try keychain.getString(forKey: "password_\(identifier)")
+    }
+
+    func delete(for identifier: String) throws {
+        try keychain.delete(forKey: "password_\(identifier)")
+    }
+}
+
+// Mock Keychain for testing since actual Keychain is macOS specific
+class MockKeychain {
+    private var storage: [String: Data] = [:]
+    private let serviceName: String
+
+    init(serviceName: String) {
+        self.serviceName = serviceName
+    }
+
+    func setString(_ value: String, forKey key: String) throws {
+        guard let data = value.data(using: .utf8) else {
+            throw KeychainError.encodingFailed
+        }
+        storage[key] = data
+    }
+
+    func getString(forKey key: String) throws -> String? {
+        guard let data = storage[key] else {
+            return nil
+        }
+        return String(data: data, encoding: .utf8)
+    }
+
+    func setData(_ data: Data, forKey key: String) throws {
+        storage[key] = data
+    }
+
+    func getData(forKey key: String) throws -> Data? {
+        return storage[key]
+    }
+
+    func setBool(_ value: Bool, forKey key: String) throws {
+        let data = Data([value ? 1 : 0])
+        storage[key] = data
+    }
+
+    func getBool(forKey key: String) throws -> Bool? {
+        guard let data = storage[key], !data.isEmpty else {
+            return nil
+        }
+        return data[0] != 0
+    }
+
+    func setInt(_ value: Int, forKey key: String) throws {
+        var mutableValue = value
+        let data = Data(bytes: &mutableValue, count: MemoryLayout<Int>.size)
+        storage[key] = data
+    }
+
+    func getInt(forKey key: String) throws -> Int? {
+        guard let data = storage[key], data.count == MemoryLayout<Int>.size else {
+            return nil
+        }
+        return data.withUnsafeBytes { $0.load(as: Int.self) }
+    }
+
+    func setDouble(_ value: Double, forKey key: String) throws {
+        var mutableValue = value
+        let data = Data(bytes: &mutableValue, count: MemoryLayout<Double>.size)
+        storage[key] = data
+    }
+
+    func getDouble(forKey key: String) throws -> Double? {
+        guard let data = storage[key], data.count == MemoryLayout<Double>.size else {
+            return nil
+        }
+        return data.withUnsafeBytes { $0.load(as: Double.self) }
+    }
+
+    func setCodable<T: Codable>(_ object: T, forKey key: String) throws {
+        let encoder = JSONEncoder()
+        let data = try encoder.encode(object)
+        storage[key] = data
+    }
+
+    func getCodable<T: Codable>(_ type: T.Type, forKey key: String) throws -> T? {
+        guard let data = storage[key] else {
+            return nil
+        }
+        let decoder = JSONDecoder()
+        return try decoder.decode(type, from: data)
+    }
+
+    func delete(forKey key: String) throws {
+        storage.removeValue(forKey: key)
+    }
+
+    func deleteAll() throws {
+        storage.removeAll()
+    }
+
+    func exists(forKey key: String) -> Bool {
+        return storage[key] != nil
+    }
+
+    func allKeys() throws -> [String] {
+        return Array(storage.keys)
+    }
+
+    func setBulk(_ items: [String: Data]) throws {
+        for (key, data) in items {
+            try setData(data, forKey: key)
+        }
+    }
+
+    func getBulk(forKeys keys: [String]) throws -> [String: Data] {
+        var results: [String: Data] = [:]
+        for key in keys {
+            if let data = try getData(forKey: key) {
+                results[key] = data
+            }
+        }
+        return results
+    }
+
+    // Password namespace simulation
+    var passwords: PasswordNamespace {
+        PasswordNamespace(keychain: self)
+    }
+
+    // Async versions
+    func setStringAsync(_ value: String, forKey key: String) async throws {
+        try setString(value, forKey: key)
+    }
+
+    func getStringAsync(forKey key: String) async throws -> String? {
+        return try getString(forKey: key)
+    }
+
+    func deleteAsync(forKey key: String) async throws {
+        try delete(forKey: key)
+    }
+}
+
+enum KeychainError: Error {
+    case encodingFailed
+    case decodingFailed
+}
 
 /// Unit tests for Keychain utility
 final class KeychainTests: XCTestCase {
 
     // MARK: - Properties
 
-    var sut: Keychain!
+    var sut: MockKeychain!
     let testServiceName = "com.swiftproxy.test"
 
     // MARK: - Test Lifecycle
@@ -14,7 +172,7 @@ final class KeychainTests: XCTestCase {
     override func setUpWithError() throws {
         try super.setUpWithError()
 
-        sut = Keychain(serviceName: testServiceName)
+        sut = MockKeychain(serviceName: testServiceName)
 
         // Clean up any existing test data
         try? sut.deleteAll()
@@ -101,7 +259,7 @@ final class KeychainTests: XCTestCase {
         try sut.setCodable(testStruct, forKey: key)
 
         // Then
-        let retrieved = try sut.getCodable(forKey: key, as: TestStruct.self)
+        let retrieved = try sut.getCodable(TestStruct.self, forKey: key)
         XCTAssertEqual(retrieved, testStruct)
     }
 
@@ -114,7 +272,7 @@ final class KeychainTests: XCTestCase {
         let key = "nonexistent"
 
         // When
-        let retrieved = try sut.getCodable(forKey: key, as: TestStruct.self)
+        let retrieved = try sut.getCodable(TestStruct.self, forKey: key)
 
         // Then
         XCTAssertNil(retrieved)

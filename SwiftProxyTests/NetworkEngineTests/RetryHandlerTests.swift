@@ -1,5 +1,5 @@
 import XCTest
-@testable import SwiftProxy
+@testable import SwiftProxyCore
 
 final class RetryHandlerTests: XCTestCase {
     var sut: RetryHandler!

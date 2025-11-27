@@ -1,6 +1,6 @@
 import XCTest
 import Combine
-@testable import SwiftProxy
+@testable import SwiftProxyCore
 
 /// Comprehensive unit tests for RuleService
 final class RuleServiceTests: XCTestCase {
@@ -34,8 +34,8 @@ final class RuleServiceTests: XCTestCase {
         // Given
         let rule = ProxyRule(
             name: "Test Rule",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .proxy
         )
 
@@ -52,8 +52,8 @@ final class RuleServiceTests: XCTestCase {
         // Given
         var rule = ProxyRule(
             name: "Original Name",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .proxy
         )
         try await sut.saveRule(rule)
@@ -72,8 +72,8 @@ final class RuleServiceTests: XCTestCase {
         // Given
         let rule = ProxyRule(
             name: "To Delete",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .proxy
         )
         try await sut.saveRule(rule)
@@ -90,14 +90,14 @@ final class RuleServiceTests: XCTestCase {
         // Given
         let rule1 = ProxyRule(
             name: "Rule 1",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .proxy
         )
         let rule2 = ProxyRule(
             name: "Rule 2",
-            pattern: "test.com",
             matchType: .domain,
+            pattern: "test.com",
             action: .direct
         )
 
@@ -117,8 +117,8 @@ final class RuleServiceTests: XCTestCase {
         // Given
         let rule = ProxyRule(
             name: "Test Rule",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .proxy
         )
         try await sut.saveRule(rule)
@@ -141,8 +141,8 @@ final class RuleServiceTests: XCTestCase {
         // Given
         let rule = ProxyRule(
             name: "Test Rule",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .proxy
         )
         try await sut.saveRule(rule)
@@ -163,8 +163,8 @@ final class RuleServiceTests: XCTestCase {
         // Given
         let rule = ProxyRule(
             name: "Test Rule",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .proxy
         )
         try await sut.saveRule(rule)
@@ -183,16 +183,16 @@ final class RuleServiceTests: XCTestCase {
         // Given - two rules that could match, different priorities
         let lowPriorityRule = ProxyRule(
             name: "Low Priority",
+            matchType: .domainRegex,
             pattern: ".*",
-            matchType: .regex,
             action: .proxy,
             priority: 1
         )
 
         let highPriorityRule = ProxyRule(
             name: "High Priority",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .direct,
             priority: 10
         )
@@ -220,16 +220,16 @@ final class RuleServiceTests: XCTestCase {
         // Given
         let rule1 = ProxyRule(
             name: "Rule 1",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .proxy,
             priority: 1
         )
 
         let rule2 = ProxyRule(
             name: "Rule 2",
-            pattern: "test.com",
             matchType: .domain,
+            pattern: "test.com",
             action: .proxy,
             priority: 2
         )
@@ -255,10 +255,10 @@ final class RuleServiceTests: XCTestCase {
         // Given
         let rule = ProxyRule(
             name: "Toggle Test",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .proxy,
-            isEnabled: true
+            enabled: true
         )
         try await sut.saveRule(rule)
 
@@ -268,7 +268,7 @@ final class RuleServiceTests: XCTestCase {
         let toggledRule = await sut.getRule(id: rule.id)
 
         // Then
-        XCTAssertFalse(toggledRule?.isEnabled ?? true)
+        XCTAssertFalse(toggledRule?.enabled ?? true)
 
         // When - toggle again
         try await sut.toggleRule(id: rule.id)
@@ -276,15 +276,15 @@ final class RuleServiceTests: XCTestCase {
         let reToggledRule = await sut.getRule(id: rule.id)
 
         // Then
-        XCTAssertTrue(reToggledRule?.isEnabled ?? false)
+        XCTAssertTrue(reToggledRule?.enabled ?? false)
     }
 
     func testDuplicateRule() async throws {
         // Given
         let original = ProxyRule(
             name: "Original",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .proxy
         )
         try await sut.saveRule(original)
@@ -306,8 +306,8 @@ final class RuleServiceTests: XCTestCase {
         // Given - valid rule
         let validRule = ProxyRule(
             name: "Valid",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .proxy
         )
 
@@ -322,8 +322,8 @@ final class RuleServiceTests: XCTestCase {
         // Given - invalid rule (empty pattern)
         let invalidRule = ProxyRule(
             name: "Invalid",
-            pattern: "",
             matchType: .domain,
+            pattern: "",
             action: .proxy
         )
 
@@ -340,15 +340,15 @@ final class RuleServiceTests: XCTestCase {
         // Given
         let rule1 = ProxyRule(
             name: "Rule 1",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .proxy
         )
 
         let rule2 = ProxyRule(
             name: "Rule 2",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .direct // Different action
         )
 
@@ -359,25 +359,25 @@ final class RuleServiceTests: XCTestCase {
 
         // Then
         XCTAssertFalse(conflicts.isEmpty)
-        XCTAssertEqual(conflicts[0].type, .identicalPatternDifferentAction)
+        XCTAssertEqual(conflicts[0].type, RuleConflict.ConflictType.identicalPatternDifferentAction)
     }
 
     func testDetectDuplicatePatternConflict() async throws {
         // Given
         let rule1 = ProxyRule(
             name: "Rule 1",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .proxy,
-            isEnabled: true
+            enabled: true
         )
 
         let rule2 = ProxyRule(
             name: "Rule 2",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .proxy, // Same action
-            isEnabled: true
+            enabled: true
         )
 
         try await sut.saveRule(rule1)
@@ -393,15 +393,15 @@ final class RuleServiceTests: XCTestCase {
         // Given
         let rule1 = ProxyRule(
             name: "Rule 1",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .proxy
         )
 
         let rule2 = ProxyRule(
             name: "Rule 2",
-            pattern: "different.com",
             matchType: .domain,
+            pattern: "different.com",
             action: .proxy
         )
 
@@ -420,15 +420,15 @@ final class RuleServiceTests: XCTestCase {
         // Given
         let rule1 = ProxyRule(
             name: "Rule 1",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .proxy
         )
 
         let rule2 = ProxyRule(
             name: "Rule 2",
-            pattern: "test.com",
             matchType: .domain,
+            pattern: "test.com",
             action: .direct
         )
 
@@ -453,14 +453,14 @@ final class RuleServiceTests: XCTestCase {
         let rules = [
             ProxyRule(
                 name: "Imported Rule 1",
-                pattern: "import1.com",
                 matchType: .domain,
+                pattern: "import1.com",
                 action: .proxy
             ),
             ProxyRule(
                 name: "Imported Rule 2",
-                pattern: "import2.com",
                 matchType: .domain,
+                pattern: "import2.com",
                 action: .direct
             )
         ]
@@ -486,8 +486,8 @@ final class RuleServiceTests: XCTestCase {
         // Given
         let rule = ProxyRule(
             name: "Export Test",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .proxy
         )
         try await sut.saveRule(rule)
@@ -522,8 +522,8 @@ final class RuleServiceTests: XCTestCase {
         // When
         let rule = ProxyRule(
             name: "Test",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .proxy
         )
         try await sut.saveRule(rule)
@@ -549,10 +549,10 @@ final class RuleServiceTests: XCTestCase {
         // When
         let rule = ProxyRule(
             name: "Enabled Test",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .proxy,
-            isEnabled: true
+            enabled: true
         )
         try await sut.saveRule(rule)
 
@@ -567,8 +567,8 @@ final class RuleServiceTests: XCTestCase {
         // Given
         let invalidRule = ProxyRule(
             name: "Invalid",
-            pattern: "",
             matchType: .domain,
+            pattern: "",
             action: .proxy
         )
 
@@ -585,8 +585,8 @@ final class RuleServiceTests: XCTestCase {
         // Given
         let rule = ProxyRule(
             name: "Non-existent",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .proxy
         )
 
@@ -619,8 +619,8 @@ final class RuleServiceTests: XCTestCase {
         for i in 0..<100 {
             let rule = ProxyRule(
                 name: "Rule \(i)",
-                pattern: "example\(i).com",
                 matchType: .domain,
+                pattern: "example\(i).com",
                 action: .proxy
             )
             try await sut.saveRule(rule)
@@ -650,10 +650,10 @@ final class RuleServiceTests: XCTestCase {
         // Given
         let rule = ProxyRule(
             name: "Disabled",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .proxy,
-            isEnabled: false
+            enabled: false
         )
         try await sut.saveRule(rule)
 
@@ -673,18 +673,18 @@ final class RuleServiceTests: XCTestCase {
         // Given - rules with same priority
         let rule1 = ProxyRule(
             name: "Rule 1",
-            pattern: "example.com",
             matchType: .domain,
+            pattern: "example.com",
             action: .proxy,
             priority: 5
         )
 
-        Thread.sleep(forTimeInterval: 0.01)
+        try await Task.sleep(nanoseconds: 10_000_000) // 0.01 seconds
 
         let rule2 = ProxyRule(
             name: "Rule 2",
+            matchType: .domainRegex,
             pattern: ".*example.*",
-            matchType: .regex,
             action: .direct,
             priority: 5
         )
