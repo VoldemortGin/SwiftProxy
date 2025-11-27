@@ -107,22 +107,51 @@
 
 ---
 
-### P2-3: 完善设置视图功能
+### P2-3: 完善设置视图功能 ✅
 
-**预估时间**: 20 小时
-**状态**: 未开始
+**状态**: ✅ **完成** (已验证现有实现)
+**完成时间**: 2025-01-27
+**实际耗时**: 30分钟 (验证)
 
-**需要实现**:
-- [ ] 规则编辑器 UI (SettingsView.swift:150)
-- [ ] 规则导入 (SettingsView.swift:387)
-- [ ] 打开日志目录 (SettingsView.swift:394)
-- [ ] 清除日志 (SettingsView.swift:407)
-- [ ] 清除缓存 (SettingsView.swift:413)
-- [ ] 重置所有设置 (SettingsView.swift:430)
+**已完成功能**:
+- ✅ 规则编辑器 UI (RuleEditorView.swift - 485行)
+  - 11种匹配类型 (Domain/IP/Port/Regex/GeoIP等)
+  - 实时验证与错误提示
+  - 创建/编辑模式
+  - 优先级滑块、启用开关
+- ✅ 规则导入 (SettingsView.swift:596-613)
+  - NSOpenPanel 文件选择器
+  - 支持 JSON/Text/Conf/List 格式
+- ✅ 打开日志目录 (SettingsView.swift:637-663)
+  - 在 Finder 中打开日志文件夹
+  - 自动创建目录结构
+- ✅ 清除日志 (SettingsView.swift:669-704)
+  - 确认对话框
+  - 删除所有 .log 文件
+  - 显示删除文件数量
+- ✅ 清除缓存 (SettingsView.swift:710-746)
+  - 确认对话框
+  - 清除文件系统缓存
+  - 清除内存缓存
+- ✅ 重置所有设置 (SettingsView.swift:756-773)
+  - 确认对话框
+  - 重置所有 AppStorage 值
+  - 清除统计数据
+  - 重启建议
 
-**文件**:
-- `Platform/macOS/UI/Views/SettingsView.swift`
-- `Platform/macOS/UI/Views/RuleEditorView.swift`
+**实现文件**:
+- ✅ RuleEditorView.swift (485行) - 完整规则编辑器
+- ✅ SettingsView.swift (835行) - 设置视图主界面
+- ✅ RulesViewModel.swift - 规则管理逻辑
+
+**额外功能**:
+- ✅ 全部危险操作都有确认对话框
+- ✅ 完整错误处理与用户反馈
+- ✅ 规则验证 (正则表达式、CIDR、端口等)
+- ✅ 成功/失败提示
+- ✅ 键盘快捷键支持
+
+**详细报告**: `P2-3_SETTINGS_VIEW_COMPLETION_REPORT.md`
 
 ---
 
