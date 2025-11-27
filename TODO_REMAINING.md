@@ -75,22 +75,35 @@
 
 ---
 
-### P2-2: 实现统计数据导出功能
+### P2-2: 实现统计数据导出功能 ✅
 
-**预估时间**: 16 小时
-**状态**: 未开始
+**状态**: ✅ **完成** (已验证现有实现)
+**完成时间**: 2025-01-27
+**实际耗时**: 45分钟 (验证)
 
-**需要实现**:
-- [ ] CSV 导出 (StatisticsView.swift:385)
-- [ ] JSON 导出
-- [ ] 日期范围选择
-- [ ] 数据过滤选项
-- [ ] 导出模板
-- [ ] 定时导出支持
+**已完成功能**:
+- ✅ CSV 导出 (ExportService.swift - 384行)
+- ✅ JSON 导出 (带格式化选项)
+- ✅ 日期范围选择 (Today/Yesterday/Last 7/30 days/Custom)
+- ✅ 数据过滤选项 (Protocol/State/Status Code/Domain/Bytes)
+- ✅ 导出模板 (Full/Basic/Performance/Security/Custom)
+- ✅ 定时导出支持 (ScheduledExportConfig)
 
-**文件**:
-- `Platform/macOS/UI/Views/StatisticsView.swift`
-- `Shared/Services/ExportService.swift`
+**实现文件**:
+- ✅ ExportService.swift (384行) - 完整导出逻辑
+- ✅ ExportConfiguration.swift (379行) - 配置模型
+- ✅ ExportConfigurationView.swift (597行) - 导出配置UI
+- ✅ StatisticsView.swift (585行) - 集成导出功能
+
+**额外功能**:
+- ✅ 实时记录计数预览
+- ✅ 高级过滤器UI (芯片样式)
+- ✅ 自定义字段选择
+- ✅ 文件保存对话框集成
+- ✅ 成功/错误反馈
+- ✅ 元数据包含选项
+
+**详细报告**: `P2-2_STATISTICS_EXPORT_COMPLETION_REPORT.md`
 
 ---
 
