@@ -47,8 +47,7 @@ public final class ConfigurationService: ConfigurationServiceProtocol {
     // MARK: - Properties
 
     private let logger: OSLog
-    // TODO: Re-add Keychain support with protocol abstraction for cross-platform
-    // private let keychain: Keychain
+    private let keychainService: KeychainServiceProtocol
     private let fileManager: FileManager
     private let storageURL: URL
     private let stateQueue = DispatchQueue(label: "com.swiftproxy.configservice", qos: .userInitiated)
@@ -63,10 +62,11 @@ public final class ConfigurationService: ConfigurationServiceProtocol {
     // MARK: - Initialization
 
     public init(
+        keychainService: KeychainServiceProtocol,
         fileManager: FileManager = .default,
         logger: OSLog = Logger.storageLog
     ) throws {
-        // self.keychain = keychain
+        self.keychainService = keychainService
         self.fileManager = fileManager
         self.logger = logger
 
@@ -92,7 +92,7 @@ public final class ConfigurationService: ConfigurationServiceProtocol {
 
     public func loadConfigurations() async throws -> [ProxyConfiguration] {
         try await stateQueue.sync {
-            try self.loadConfigurationsSync()
+            try await self.loadConfigurationsAsync()
         }
     }
 
@@ -109,10 +109,16 @@ public final class ConfigurationService: ConfigurationServiceProtocol {
             // Add or update in cache
             self.cachedConfigurations[configuration.id] = configuration
 
-            // TODO: Save password to keychain if present
-            // if let password = configuration.password {
-            //     try keychain.passwords.set(password, for: configuration.id.uuidString)
-            // }
+            // Save password to keychain if present
+            if let password = configuration.password, !password.isEmpty {
+                do {
+                    try await self.keychainService.savePassword(password, for: configuration.id.uuidString)
+                    os_log(.debug, log: self.logger, "Saved password to keychain for: %@", configuration.id.uuidString)
+                } catch {
+                    os_log(.error, log: self.logger, "Failed to save password to keychain: %@", error.localizedDescription)
+                    // Note: We continue even if keychain save fails, as the configuration itself is still valid
+                }
+            }
 
             // Persist to disk
             try self.persistConfigurations()
@@ -154,8 +160,14 @@ public final class ConfigurationService: ConfigurationServiceProtocol {
                 throw AppError.proxyConfigurationInvalid("Configuration not found")
             }
 
-            // TODO: Delete password from keychain
-            // try? keychain.passwords.delete(for: id.uuidString)
+            // Delete password from keychain
+            do {
+                try await self.keychainService.deletePassword(for: id.uuidString)
+                os_log(.debug, log: self.logger, "Deleted password from keychain for: %@", id.uuidString)
+            } catch {
+                os_log(.error, log: self.logger, "Failed to delete password from keychain: %@", error.localizedDescription)
+                // Continue even if keychain deletion fails
+            }
 
             // Persist changes
             try self.persistConfigurations()
@@ -224,7 +236,7 @@ public final class ConfigurationService: ConfigurationServiceProtocol {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
 
-        var configs = try decoder.decode([ProxyConfiguration].self, from: data)
+        let configs = try decoder.decode([ProxyConfiguration].self, from: data)
 
         if !merge {
             // Clear existing configurations
@@ -233,10 +245,17 @@ public final class ConfigurationService: ConfigurationServiceProtocol {
 
         // Import configurations
         for var config in configs {
-            // TODO: Load password from keychain if it exists
-            // if let password = try? keychain.passwords.get(for: config.id.uuidString) {
-            //     config.password = password
-            // }
+            // Load password from keychain if it exists
+            do {
+                if let password = try await keychainService.loadPassword(for: config.id.uuidString) {
+                    config.password = password
+                    os_log(.debug, log: logger, "Loaded password from keychain for: %@", config.id.uuidString)
+                }
+            } catch {
+                os_log(.error, log: logger, "Failed to load password from keychain for %@: %@",
+                       config.id.uuidString, error.localizedDescription)
+                // Continue without password if keychain load fails
+            }
 
             cachedConfigurations[config.id] = config
         }
@@ -317,7 +336,7 @@ public final class ConfigurationService: ConfigurationServiceProtocol {
         }
     }
 
-    private func loadConfigurationsSync() throws -> [ProxyConfiguration] {
+    private func loadConfigurationsAsync() async throws -> [ProxyConfiguration] {
         let fileURL = storageURL.appendingPathComponent("configurations.json")
 
         // If file doesn't exist, return empty array
@@ -332,12 +351,19 @@ public final class ConfigurationService: ConfigurationServiceProtocol {
 
         var configs = try decoder.decode([ProxyConfiguration].self, from: data)
 
-        // TODO: Load passwords from keychain
-        // for index in configs.indices {
-        //     if let password = try? keychain.passwords.get(for: configs[index].id.uuidString) {
-        //         configs[index].password = password
-        //     }
-        // }
+        // Load passwords from keychain
+        for index in configs.indices {
+            do {
+                if let password = try await keychainService.loadPassword(for: configs[index].id.uuidString) {
+                    configs[index].password = password
+                    os_log(.debug, log: logger, "Loaded password from keychain for: %@", configs[index].id.uuidString)
+                }
+            } catch {
+                os_log(.error, log: logger, "Failed to load password from keychain for %@: %@",
+                       configs[index].id.uuidString, error.localizedDescription)
+                // Continue without password if keychain load fails
+            }
+        }
 
         // Update cache
         cachedConfigurations = Dictionary(uniqueKeysWithValues: configs.map { ($0.id, $0) })

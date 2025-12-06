@@ -262,17 +262,9 @@ struct ErrorClassifier {
             return classifyAppError(appError)
         }
 
-        // Classify NSError
-        if let nsError = error as? NSError {
-            return classifyNSError(nsError)
-        }
-
-        // Default classification
-        return ErrorClassification(
-            isRetryable: false,
-            severity: .high,
-            category: .unknown
-        )
+        // Classify as NSError (all Swift errors can be bridged to NSError)
+        let nsError = error as NSError
+        return classifyNSError(nsError)
     }
 
     private func classifyAppError(_ error: AppError) -> ErrorClassification {

@@ -1,6 +1,7 @@
 import SwiftUI
 
-@main
+// Note: This is a simplified prototype version - @main is disabled in favor of SwiftProxyApp
+// @main
 struct SimpleSwiftProxyApp: App {
     @StateObject private var viewModel = SimpleProxyViewModel()
 
@@ -151,9 +152,9 @@ struct DetailView: View {
             case .connections:
                 ConnectionsView()
             case .configuration:
-                ConfigurationView()
+                SimpleConfigurationView()
             case .statistics:
-                StatisticsView()
+                SimpleStatisticsView()
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -276,7 +277,7 @@ struct ConnectionsView: View {
     }
 }
 
-struct ConfigurationView: View {
+struct SimpleConfigurationView: View {
     @EnvironmentObject var viewModel: SimpleProxyViewModel
     @State private var proxyPort = "8888"
     @State private var selectedProtocol = "HTTP"
@@ -356,7 +357,7 @@ struct ConfigurationView: View {
     }
 }
 
-struct StatisticsView: View {
+struct SimpleStatisticsView: View {
     @EnvironmentObject var viewModel: SimpleProxyViewModel
 
     var body: some View {

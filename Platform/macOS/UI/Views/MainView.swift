@@ -6,11 +6,13 @@ import SwiftProxyCore
 struct MainView: View {
     // MARK: - Properties
     @StateObject private var viewModel: MainViewModel
+    private let ruleService: RuleServiceProtocol
     @State private var selectedTab: Tab = .proxy
 
     // MARK: - Initialization
-    init(viewModel: MainViewModel) {
+    init(viewModel: MainViewModel, ruleService: RuleServiceProtocol) {
         _viewModel = StateObject(wrappedValue: viewModel)
+        self.ruleService = ruleService
     }
 
     // MARK: - Body
@@ -96,7 +98,7 @@ struct MainView: View {
         case .statistics:
             StatisticsView(viewModel: viewModel)
         case .settings:
-            SettingsView(viewModel: viewModel)
+            SettingsView(viewModel: viewModel, ruleService: ruleService)
         }
     }
 
@@ -215,12 +217,12 @@ enum Tab: String, CaseIterable, Identifiable {
 
 // MARK: - Previews
 #Preview("Main View") {
-    MainView(viewModel: .preview)
+    MainView(viewModel: .preview, ruleService: MockRuleService())
         .frame(width: 900, height: 600)
 }
 
 #Preview("Dark Mode") {
-    MainView(viewModel: .preview)
+    MainView(viewModel: .preview, ruleService: MockRuleService())
         .frame(width: 900, height: 600)
         .preferredColorScheme(.dark)
 }

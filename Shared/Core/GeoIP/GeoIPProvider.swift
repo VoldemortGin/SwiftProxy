@@ -73,7 +73,13 @@ public actor LocalGeoIPProvider: GeoIPProvider {
 
     public init(logger: OSLog = OSLog(subsystem: "com.swiftproxy", category: "GeoIP")) {
         self.logger = logger
-        loadBuiltInRanges()
+        // Use nonisolated wrapper to avoid calling actor-isolated method from init
+        initializeBuiltInRanges()
+    }
+
+    /// Nonisolated wrapper to initialize built-in ranges asynchronously
+    nonisolated private func initializeBuiltInRanges() {
+        Task { await loadBuiltInRanges() }
     }
 
     // MARK: - GeoIP Provider

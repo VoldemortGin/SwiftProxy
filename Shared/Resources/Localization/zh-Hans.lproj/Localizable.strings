@@ -1,0 +1,180 @@
+/* SwiftProxy - 简体中文本地化 */
+
+/* 应用名称 */
+"app_name" = "SwiftProxy";
+"app_description" = "高性能网络代理";
+
+/* 标签页 */
+"tab_proxy" = "代理";
+"tab_connections" = "连接";
+"tab_statistics" = "统计";
+"tab_settings" = "设置";
+
+/* 状态 */
+"status_active" = "活动";
+"status_inactive" = "未活动";
+"status_connected" = "已连接";
+"status_connecting" = "连接中...";
+"status_disconnected" = "已断开";
+"status_error" = "错误";
+
+/* 代理开关 */
+"proxy_enabled" = "代理已启用";
+"proxy_disabled" = "代理已禁用";
+"proxy_enable" = "启用";
+"proxy_disable" = "禁用";
+"proxy_toggle" = "切换代理";
+
+/* 配置 */
+"config_name" = "配置名称";
+"config_type" = "类型";
+"config_host" = "主机";
+"config_port" = "端口";
+"config_username" = "用户名";
+"config_password" = "密码";
+"config_requires_auth" = "需要认证";
+"config_no_selection" = "未选择代理配置";
+"config_new" = "新建配置";
+"config_edit" = "编辑配置";
+"config_delete" = "删除配置";
+"config_duplicate" = "复制配置";
+"config_import" = "导入配置";
+"config_export" = "导出配置";
+
+/* 统计 */
+"stats_requests" = "请求数";
+"stats_downloaded" = "下载量";
+"stats_uploaded" = "上传量";
+"stats_total_bytes_in" = "总接收字节";
+"stats_total_bytes_out" = "总发送字节";
+"stats_active_connections" = "活动连接";
+"stats_total_connections" = "总连接数";
+"stats_success_rate" = "成功率";
+"stats_average_latency" = "平均延迟";
+"stats_peak_bandwidth" = "峰值带宽";
+"stats_export" = "导出统计";
+"stats_clear" = "清空统计";
+
+/* 规则 */
+"rules_title" = "规则";
+"rules_add" = "添加规则";
+"rules_edit" = "编辑规则";
+"rules_delete" = "删除规则";
+"rules_import" = "导入规则";
+"rules_export" = "导出规则";
+"rules_type" = "规则类型";
+"rules_pattern" = "匹配模式";
+"rules_policy" = "策略";
+"rules_enabled" = "已启用";
+
+/* 设置 */
+"settings_general" = "通用";
+"settings_network" = "网络";
+"settings_security" = "安全";
+"settings_advanced" = "高级";
+"settings_about" = "关于";
+"settings_launch_at_login" = "登录时启动";
+"settings_show_in_menu_bar" = "在菜单栏显示";
+"settings_notifications" = "通知";
+"settings_dark_mode" = "深色模式";
+"settings_language" = "语言";
+
+/* 备份与恢复 */
+"backup_title" = "备份与恢复";
+"backup_create" = "创建备份";
+"backup_restore" = "恢复备份";
+"backup_auto" = "自动备份";
+"backup_location" = "备份位置";
+"backup_last" = "最近备份";
+"backup_list" = "备份列表";
+"backup_delete" = "删除备份";
+
+/* 导入/导出 */
+"import_title" = "导入配置";
+"import_from_file" = "从文件导入";
+"import_from_url" = "从 URL 导入";
+"import_from_clipboard" = "从剪贴板导入";
+"export_title" = "导出配置";
+"export_as_json" = "导出为 JSON";
+"export_as_surge" = "导出为 Surge 格式";
+"export_success" = "配置导出成功";
+"import_success" = "配置导入成功";
+
+/* 引导页 */
+"onboarding_welcome_title" = "欢迎使用 SwiftProxy";
+"onboarding_welcome_message" = "一款强大且优雅的 macOS 网络代理";
+"onboarding_features_title" = "主要功能";
+"onboarding_features_message" = "多协议支持、智能规则和实时统计";
+"onboarding_setup_title" = "初始设置";
+"onboarding_setup_message" = "让我们配置您的第一个代理连接";
+"onboarding_permissions_title" = "权限";
+"onboarding_permissions_message" = "SwiftProxy 需要一些权限才能正常工作";
+"onboarding_complete_title" = "全部完成！";
+"onboarding_complete_message" = "您已准备好开始使用 SwiftProxy";
+"onboarding_next" = "下一步";
+"onboarding_skip" = "跳过";
+"onboarding_finish" = "完成";
+"onboarding_previous" = "上一步";
+
+/* 操作 */
+"action_save" = "保存";
+"action_cancel" = "取消";
+"action_delete" = "删除";
+"action_edit" = "编辑";
+"action_refresh" = "刷新";
+"action_clear" = "清空";
+"action_reset" = "重置";
+"action_apply" = "应用";
+"action_ok" = "确定";
+"action_close" = "关闭";
+"action_open" = "打开";
+"action_browse" = "浏览";
+
+/* 错误 */
+"error_title" = "错误";
+"error_network" = "网络错误";
+"error_configuration" = "配置错误";
+"error_connection_failed" = "连接失败";
+"error_auth_failed" = "认证失败";
+"error_invalid_input" = "输入无效";
+"error_file_not_found" = "文件未找到";
+"error_permission_denied" = "权限被拒绝";
+
+/* 确认 */
+"confirm_delete_title" = "确认删除";
+"confirm_delete_message" = "您确定要删除此项吗？";
+"confirm_reset_title" = "确认重置";
+"confirm_reset_message" = "这将重置所有设置为默认值。继续？";
+"confirm_clear_title" = "确认清空";
+"confirm_clear_message" = "这将清空所有数据。继续？";
+
+/* 无障碍 */
+"accessibility_proxy_toggle" = "切换代理开关";
+"accessibility_status_indicator" = "代理状态指示器";
+"accessibility_configuration_list" = "代理配置列表";
+"accessibility_statistics_chart" = "统计图表";
+"accessibility_settings_panel" = "设置面板";
+"accessibility_menu_bar" = "菜单栏图标";
+
+/* 通知 */
+"notification_proxy_enabled" = "代理已启用";
+"notification_proxy_disabled" = "代理已禁用";
+"notification_config_saved" = "配置已保存";
+"notification_backup_created" = "备份创建成功";
+"notification_restore_complete" = "恢复完成";
+
+/* 菜单 */
+"menu_about" = "关于 SwiftProxy";
+"menu_preferences" = "偏好设置...";
+"menu_quit" = "退出 SwiftProxy";
+"menu_show_main_window" = "打开 SwiftProxy";
+"menu_quick_status" = "显示快速状态";
+
+/* 其他 */
+"loading" = "加载中...";
+"no_data" = "暂无数据";
+"search" = "搜索";
+"filter" = "筛选";
+"sort" = "排序";
+"view_details" = "查看详情";
+"hide_details" = "隐藏详情";

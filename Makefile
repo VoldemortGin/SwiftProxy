@@ -1,17 +1,22 @@
 # SwiftProxy Makefile
 # Provides convenient commands for building, testing, and running the project
 
-.PHONY: help build run test clean release install format lint
+.PHONY: help build run test clean release install format lint app deep-clean
 
 # Default target
 .DEFAULT_GOAL := help
 
 # Variables
 PRODUCT_NAME := SwiftProxy
+EXECUTABLE_NAME := SimpleSwiftProxy
 BUILD_DIR := .build
-DEBUG_BUILD := $(BUILD_DIR)/debug/$(PRODUCT_NAME)
-RELEASE_BUILD := $(BUILD_DIR)/release/$(PRODUCT_NAME)
+DEBUG_BUILD := $(BUILD_DIR)/debug/$(EXECUTABLE_NAME)
+RELEASE_BUILD := $(BUILD_DIR)/release/$(EXECUTABLE_NAME)
 INSTALL_PATH := /usr/local/bin
+APP_BUNDLE := $(PRODUCT_NAME).app
+APP_CONTENTS := $(APP_BUNDLE)/Contents
+APP_MACOS := $(APP_CONTENTS)/MacOS
+APP_RESOURCES := $(APP_CONTENTS)/Resources
 
 # Colors for output
 CYAN := \033[0;36m
@@ -66,12 +71,32 @@ release:
 	@echo "$(GREEN)✓ Release build complete!$(NC)"
 	@echo "Binary location: $(RELEASE_BUILD)"
 
+## app: Build and create macOS .app bundle
+app: release
+	@echo "$(CYAN)Creating $(APP_BUNDLE) bundle...$(NC)"
+	@mkdir -p $(APP_MACOS)
+	@mkdir -p $(APP_RESOURCES)
+	@cp $(RELEASE_BUILD) $(APP_MACOS)/$(PRODUCT_NAME)
+	@cp Info.plist $(APP_CONTENTS)/
+	@echo "$(GREEN)✓ App bundle created!$(NC)"
+	@echo "$(CYAN)Signing app bundle...$(NC)"
+	@codesign --force --deep --sign - $(APP_BUNDLE) 2>/dev/null || echo "$(YELLOW)⚠ Code signing skipped (no valid identity)$(NC)"
+	@echo "$(GREEN)✓ $(APP_BUNDLE) ready!$(NC)"
+	@echo "Location: $(PWD)/$(APP_BUNDLE)"
+
 ## clean: Clean build artifacts
 clean:
 	@echo "$(CYAN)Cleaning build artifacts...$(NC)"
 	@swift package clean
 	@rm -rf $(BUILD_DIR)
 	@echo "$(GREEN)✓ Clean complete!$(NC)"
+
+## deep-clean: Deep clean including .app bundle and DerivedData
+deep-clean: clean
+	@echo "$(CYAN)Deep cleaning all artifacts...$(NC)"
+	@rm -rf $(APP_BUNDLE)
+	@rm -rf ~/Library/Developer/Xcode/DerivedData/SwiftProxy-*
+	@echo "$(GREEN)✓ Deep clean complete!$(NC)"
 
 ## install: Install the release build to system (requires sudo)
 install: release
@@ -137,10 +162,10 @@ coverage:
 	@echo "$(GREEN)✓ Coverage report generated!$(NC)"
 
 ## archive: Create distributable archive
-archive: release
+archive: app
 	@echo "$(CYAN)Creating archive...$(NC)"
 	@mkdir -p dist
-	@tar -czf dist/$(PRODUCT_NAME)-$(shell date +%Y%m%d).tar.gz -C $(BUILD_DIR)/release $(PRODUCT_NAME)
+	@tar -czf dist/$(PRODUCT_NAME)-$(shell date +%Y%m%d).tar.gz $(APP_BUNDLE)
 	@echo "$(GREEN)✓ Archive created in dist/$(NC)"
 
 ## info: Show project information
@@ -148,10 +173,15 @@ info:
 	@echo "$(CYAN)SwiftProxy Project Information:$(NC)"
 	@echo ""
 	@echo "Product Name:    $(PRODUCT_NAME)"
+	@echo "Executable Name: $(EXECUTABLE_NAME)"
+	@echo "Bundle ID:       com.swiftproxy.app"
+	@echo "Version:         1.0.0"
+	@echo "Min macOS:       13.0"
 	@echo "Swift Version:   $(shell swift --version | head -n 1)"
 	@echo "Build Directory: $(BUILD_DIR)"
 	@echo "Debug Binary:    $(DEBUG_BUILD)"
 	@echo "Release Binary:  $(RELEASE_BUILD)"
+	@echo "App Bundle:      $(APP_BUNDLE)"
 	@echo ""
 
 ## doctor: Check development environment

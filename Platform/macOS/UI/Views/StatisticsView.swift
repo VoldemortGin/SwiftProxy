@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftProxyCore
 import Charts
+import UniformTypeIdentifiers
 
 /// Comprehensive statistics and analytics view
 /// Displays charts, metrics, and insights about network traffic
@@ -9,6 +10,11 @@ struct StatisticsView: View {
     @ObservedObject var viewModel: MainViewModel
     @State private var selectedTimeRange: TimeRange = .day
     @State private var selectedMetric: MetricType = .requests
+    @State private var showingExportSheet = false
+    @State private var exportConfiguration = ExportConfiguration()
+    @State private var isExporting = false
+    @State private var exportError: String?
+    @State private var showingExportAlert = false
 
     // MARK: - Body
     var body: some View {
@@ -34,6 +40,27 @@ struct StatisticsView: View {
             }
             .padding()
         }
+        .sheet(isPresented: $showingExportSheet) {
+            ExportConfigurationView(
+                configuration: $exportConfiguration,
+                connections: convertNetworkRequestsToConnections(viewModel.recentRequests),
+                statistics: convertTrafficStatistics(viewModel.statistics)
+            ) { config in
+                showingExportSheet = false
+                performExport(with: config)
+            }
+        }
+        .alert("Export Status", isPresented: $showingExportAlert) {
+            Button("OK") {
+                exportError = nil
+            }
+        } message: {
+            if let error = exportError {
+                Text(error)
+            } else {
+                Text("Statistics exported successfully!")
+            }
+        }
     }
 
     // MARK: - Subviews
@@ -51,17 +78,12 @@ struct StatisticsView: View {
 
             Spacer()
 
-            Menu {
-                Button("Export CSV") {
-                    exportStatistics()
-                }
-
-                Button("Export JSON") {
-                    exportStatistics(format: .json)
-                }
+            Button {
+                showingExportSheet = true
             } label: {
                 Label("Export", systemImage: "square.and.arrow.up")
             }
+            .disabled(isExporting)
         }
     }
 
@@ -233,14 +255,12 @@ struct StatisticsView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding()
             } else {
+                // Use bar chart instead of SectorMark (macOS 14.0+ only)
                 Chart(methodDistribution, id: \.method) { item in
-                    SectorMark(
-                        angle: .value("Count", item.count),
-                        innerRadius: .ratio(0.5),
-                        angularInset: 2
+                    BarMark(
+                        x: .value("Count", item.count)
                     )
                     .foregroundStyle(by: .value("Method", item.method.rawValue))
-                    .cornerRadius(4)
                 }
                 .frame(height: 200)
                 .chartLegend(position: .trailing, alignment: .center)
@@ -278,11 +298,11 @@ struct StatisticsView: View {
     }
 
     // MARK: - Computed Properties
-    private var chartData: [ChartDataPoint] {
+    private var chartData: [StatChartDataPoint] {
         // Generate sample data based on recent requests
         let calendar = Calendar.current
         let now = Date()
-        var dataPoints: [ChartDataPoint] = []
+        var dataPoints: [StatChartDataPoint] = []
 
         let intervals: Int
         let component: Calendar.Component
@@ -315,7 +335,7 @@ struct StatisticsView: View {
                 value = Int.random(in: 50...500)
             }
 
-            dataPoints.append(ChartDataPoint(
+            dataPoints.append(StatChartDataPoint(
                 timestamp: date,
                 value: value,
                 category: selectedMetric.rawValue
@@ -382,17 +402,133 @@ struct StatisticsView: View {
         String(format: "%.0f ms", latency * 1000)
     }
 
-    private func exportStatistics(format: ExportFormat = .csv) {
-        // TODO: Implement export functionality
+    private func performExport(with configuration: ExportConfiguration) {
+        // Show save panel
         let panel = NSSavePanel()
-        panel.nameFieldStringValue = "statistics.\(format.rawValue)"
-        panel.allowedContentTypes = [format.contentType]
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd_HHmm"
+        let timestamp = dateFormatter.string(from: Date())
+        panel.nameFieldStringValue = "swiftproxy_statistics_\(timestamp).\(configuration.format.fileExtension)"
+        panel.allowedContentTypes = [configuration.format == .csv ? .commaSeparatedText : .json]
+        panel.canCreateDirectories = true
+        panel.showsTagField = true
 
-        panel.begin { response in
-            if response == .OK, let url = panel.url {
-                // Export data
-                print("Export to \(url)")
+        panel.begin { [self] response in
+            guard response == .OK, let url = panel.url else { return }
+
+            // Perform export asynchronously
+            isExporting = true
+            Task {
+                do {
+                    // Convert data for export
+                    let connections = convertNetworkRequestsToConnections(viewModel.recentRequests)
+                    let statistics = convertTrafficStatistics(viewModel.statistics)
+
+                    // Export data
+                    let data = try await ExportService.shared.exportStatistics(
+                        statistics: statistics,
+                        connections: connections,
+                        configuration: configuration
+                    )
+
+                    // Write to file
+                    try data.write(to: url, options: .atomic)
+
+                    // Success
+                    await MainActor.run {
+                        isExporting = false
+                        exportError = nil
+                        showingExportAlert = true
+                    }
+                } catch {
+                    // Error
+                    await MainActor.run {
+                        isExporting = false
+                        exportError = "Failed to export: \(error.localizedDescription)"
+                        showingExportAlert = true
+                    }
+                }
             }
+        }
+    }
+
+    // MARK: - Data Conversion
+
+    private func convertNetworkRequestsToConnections(_ requests: [NetworkRequest]) -> [Connection] {
+        return requests.map { request in
+            Connection(
+                id: request.id,
+                processName: request.processName,
+                processID: request.processID,
+                host: request.host,
+                port: request.url.port ?? (request.url.scheme == "https" ? 443 : 80),
+                protocol: convertProxyTypeToConnectionProtocol(request.proxyType),
+                state: convertRequestStatusToConnectionState(request.status),
+                startTime: request.startTime,
+                endTime: request.endTime,
+                bytesReceived: UInt64(request.responseSize),
+                bytesSent: UInt64(request.requestSize),
+                requestURL: request.url,
+                requestMethod: request.method.rawValue,
+                responseStatusCode: request.statusCode,
+                error: request.error
+            )
+        }
+    }
+
+    private func convertTrafficStatistics(_ traffic: TrafficStatistics) -> Statistics {
+        var statistics = Statistics()
+
+        // Convert session statistics
+        statistics.session = SessionStatistics(
+            startTime: traffic.startTime,
+            connectionCount: traffic.totalRequests,
+            activeConnections: 0,
+            successfulConnections: traffic.successfulRequests,
+            failedConnections: traffic.failedRequests,
+            rejectedConnections: traffic.rejectedRequests,
+            bytesReceived: UInt64(traffic.totalBytesIn),
+            bytesSent: UInt64(traffic.totalBytesOut),
+            averageConnectionDuration: traffic.averageLatency,
+            averageDataRate: 0
+        )
+
+        // Convert domain statistics
+        for (host, count) in traffic.requestsByHost {
+            statistics.domains[host] = DomainStatistics(
+                domain: host,
+                connectionCount: count
+            )
+        }
+
+        return statistics
+    }
+
+    private func convertProxyTypeToConnectionProtocol(_ proxyType: ProxyType) -> ConnectionProtocol {
+        switch proxyType {
+        case .http:
+            return .http
+        case .https:
+            return .https
+        case .socks5:
+            return .tcp
+        case .direct, .proxy:
+            return .tcp
+        }
+    }
+
+    private func convertRequestStatusToConnectionState(_ status: RequestStatus) -> ConnectionState {
+        switch status {
+        case .pending:
+            return .connecting
+        case .inProgress:
+            return .connected
+        case .completed:
+            return .closed
+        case .failed, .timeout:
+            return .failed
+        case .rejected:
+            return .rejected
         }
     }
 }
@@ -408,18 +544,6 @@ struct MethodDistributionItem {
     let method: HTTPMethod
     let count: Int
     let percentage: Int
-}
-
-enum ExportFormat: String {
-    case csv
-    case json
-
-    var contentType: UTType {
-        switch self {
-        case .csv: return .commaSeparatedText
-        case .json: return .json
-        }
-    }
 }
 
 // MARK: - Previews

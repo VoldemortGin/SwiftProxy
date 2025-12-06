@@ -45,7 +45,7 @@ struct StatusIndicator: View {
         .onAppear {
             startAnimation()
         }
-        .onChange(of: status) { _, _ in
+        .onChange(of: status) { _ in
             startAnimation()
         }
     }

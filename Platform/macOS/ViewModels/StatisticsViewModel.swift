@@ -51,15 +51,15 @@ public final class StatisticsViewModel: ObservableObject {
 
     /// Clear all statistics
     public func clearAll() async {
-        os_log(.warning, log: logger, "Clearing all statistics")
+        os_log(.default, log: logger, "Clearing all statistics")
         isLoading = true
         do {
             try await statisticsService.clearAllStatistics()
             await loadStatistics()
         } catch let appError as AppError {
-            error = appError
-        } catch {
-            error = .unknown(error)
+            self.error = appError
+        } catch let otherError {
+            self.error = .unknown(otherError)
         }
         isLoading = false
     }

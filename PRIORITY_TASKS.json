@@ -1,0 +1,285 @@
+{
+  "project_info": {
+    "name": "SwiftProxy",
+    "version": "v0.1.0-alpha",
+    "status": "In Development",
+    "last_updated": "2025-11-22",
+    "compilation_status": "Debug builds successfully, Release has minor async/await issues",
+    "test_status": "Tests fail due to incorrect module imports"
+  },
+  "tasks": [
+    {
+      "id": "P0-1",
+      "priority": "P0",
+      "title": "Fix test module imports",
+      "description": "All test files are importing '@testable import SwiftProxy' but the module is named 'SwiftProxyCore' in Package.swift. This blocks all testing.",
+      "files": [
+        "SwiftProxyTests/**/*.swift"
+      ],
+      "estimated_hours": 1,
+      "dependencies": [],
+      "technical_details": "Replace '@testable import SwiftProxy' with '@testable import SwiftProxyCore' in all test files",
+      "completion_criteria": "Tests can compile and start running"
+    },
+    {
+      "id": "P0-2",
+      "priority": "P0",
+      "title": "Add 'make app' target to Makefile",
+      "description": "CLAUDE.md references 'make app' as the primary build command but it doesn't exist. This is critical for following the project's documented workflow.",
+      "files": [
+        "Makefile"
+      ],
+      "estimated_hours": 2,
+      "dependencies": [],
+      "technical_details": "Create an 'app' target that builds release version and creates SwiftProxy.app bundle with Info.plist and code signing",
+      "completion_criteria": "'make app' command creates a runnable SwiftProxy.app bundle"
+    },
+    {
+      "id": "P0-3",
+      "priority": "P0",
+      "title": "Fix NotificationManager async/await issues",
+      "description": "Release build fails with 'no async operations occur within await expression' errors for NotificationManager methods",
+      "files": [
+        "Platform/macOS/SwiftProxyApp.swift",
+        "Platform/macOS/Services/NotificationManager.swift"
+      ],
+      "estimated_hours": 2,
+      "dependencies": [],
+      "technical_details": "Either make NotificationManager methods truly async or remove unnecessary await keywords",
+      "completion_criteria": "Release build compiles successfully"
+    },
+    {
+      "id": "P1-1",
+      "priority": "P1",
+      "title": "Complete SSLHandler implementation",
+      "description": "SSLHandler has platform API issues and incomplete certificate validation logic. This is needed for HTTPS proxying.",
+      "files": [
+        "Shared/Core/NetworkEngine/SSLHandler.swift"
+      ],
+      "estimated_hours": 16,
+      "dependencies": [],
+      "technical_details": "Fix sec_trust_copy_certificate_chain API calls, fix CFString conversions, complete certificate validation, add TLS 1.3 support with 1.2 fallback",
+      "completion_criteria": "SSLHandler compiles and provides full TLS/SSL support"
+    },
+    {
+      "id": "P1-2",
+      "priority": "P1",
+      "title": "Fix PacketHandler initializer visibility",
+      "description": "PacketHandler initializer is not public, preventing usage from other modules",
+      "files": [
+        "Shared/Core/NetworkEngine/PacketHandler.swift"
+      ],
+      "estimated_hours": 4,
+      "dependencies": [],
+      "technical_details": "Make initializer public, add packet buffering logic, implement traffic shaping",
+      "completion_criteria": "PacketHandler can be instantiated and used for packet processing"
+    },
+    {
+      "id": "P1-3",
+      "priority": "P1",
+      "title": "Implement PerformanceOptimizations module",
+      "description": "TrafficInterceptor and other components depend on PerformanceOptimizations which doesn't exist",
+      "files": [
+        "Shared/Core/Performance/PerformanceOptimizations.swift"
+      ],
+      "estimated_hours": 24,
+      "dependencies": [],
+      "technical_details": "Implement RateLimiter with token bucket algorithm, add memory pool management, implement performance monitoring utilities",
+      "completion_criteria": "PerformanceOptimizations module provides rate limiting and monitoring capabilities"
+    },
+    {
+      "id": "P1-4",
+      "priority": "P1",
+      "title": "Complete Keychain integration",
+      "description": "Multiple TODOs for Keychain support in ConfigurationService. Needed for secure credential storage.",
+      "files": [
+        "Platform/macOS/Utils/Keychain.swift",
+        "Platform/macOS/Utils/KeychainServiceAdapter.swift",
+        "Shared/Core/Utils/KeychainService.swift",
+        "Shared/Services/ConfigurationService.swift"
+      ],
+      "estimated_hours": 16,
+      "dependencies": [],
+      "technical_details": "Create cross-platform Keychain protocol abstraction, implement password storage/retrieval/deletion at lines 50, 112, 157, 236, 335",
+      "completion_criteria": "Passwords are securely stored in Keychain instead of UserDefaults"
+    },
+    {
+      "id": "P1-5",
+      "priority": "P1",
+      "title": "Fix all unit test implementations",
+      "description": "Once imports are fixed, tests need to be verified and fixed for actual functionality",
+      "files": [
+        "SwiftProxyTests/**/*.swift"
+      ],
+      "estimated_hours": 16,
+      "dependencies": ["P0-1"],
+      "technical_details": "Fix test assertions, mock dependencies, ensure >80% code coverage",
+      "completion_criteria": "All unit tests pass with >80% code coverage"
+    },
+    {
+      "id": "P2-1",
+      "priority": "P2",
+      "title": "Implement Main UI missing features",
+      "description": "SwiftProxyApp has TODOs for new configuration window, quick status popover, and menu toggle",
+      "files": [
+        "Platform/macOS/SwiftProxyApp.swift",
+        "Platform/macOS/UI/Views/QuickStatusPopover.swift"
+      ],
+      "estimated_hours": 24,
+      "dependencies": [],
+      "technical_details": "Implement 'Show new configuration window' (line 61), 'Show quick status popover' (line 152), 'Toggle proxy state' menu action (line 156)",
+      "completion_criteria": "All main UI features are functional and accessible from menu bar"
+    },
+    {
+      "id": "P2-2",
+      "priority": "P2",
+      "title": "Implement Statistics Export functionality",
+      "description": "StatisticsView has TODO for CSV/JSON export functionality",
+      "files": [
+        "Platform/macOS/UI/Views/StatisticsView.swift",
+        "Shared/Services/ExportService.swift"
+      ],
+      "estimated_hours": 16,
+      "dependencies": [],
+      "technical_details": "Implement CSV export (line 385), add JSON export, date range selection, filtering options",
+      "completion_criteria": "Users can export statistics data in CSV and JSON formats"
+    },
+    {
+      "id": "P2-3",
+      "priority": "P2",
+      "title": "Complete Settings View features",
+      "description": "SettingsView has multiple TODOs for rule editor, import/export, logs management",
+      "files": [
+        "Platform/macOS/UI/Views/SettingsView.swift",
+        "Platform/macOS/UI/Views/RuleEditorView.swift"
+      ],
+      "estimated_hours": 20,
+      "dependencies": [],
+      "technical_details": "Implement rule editor UI (line 150), rule import (line 387), logs directory (line 394), clear logs (line 407), clear cache (line 413), reset settings (line 430)",
+      "completion_criteria": "All settings features are functional"
+    },
+    {
+      "id": "P2-4",
+      "priority": "P2",
+      "title": "Add PAC support and proxy chains",
+      "description": "Advanced proxy features for enterprise use cases",
+      "files": [
+        "Shared/Core/NetworkEngine/ProxyServer.swift",
+        "Shared/Models/ProxyConfiguration.swift"
+      ],
+      "estimated_hours": 40,
+      "dependencies": ["P1-1"],
+      "technical_details": "Implement PAC (Proxy Auto-Config) support, add proxy chain support, implement load balancing",
+      "completion_criteria": "PAC files can be loaded and proxy chains work"
+    },
+    {
+      "id": "P2-5",
+      "priority": "P2",
+      "title": "Enhance Rule Engine",
+      "description": "Add GeoIP, user agent, and time-based rules",
+      "files": [
+        "Shared/Models/ProxyRule.swift",
+        "Shared/Services/RuleService.swift"
+      ],
+      "estimated_hours": 32,
+      "dependencies": [],
+      "technical_details": "Add GeoIP rule matching, implement user agent matching, add time-based conditional rules",
+      "completion_criteria": "Advanced rule types are functional"
+    },
+    {
+      "id": "P2-6",
+      "priority": "P2",
+      "title": "Integration and Performance Tests",
+      "description": "Add comprehensive integration and performance test suites",
+      "files": [
+        "SwiftProxyIntegrationTests/**/*.swift"
+      ],
+      "estimated_hours": 32,
+      "dependencies": ["P1-5"],
+      "technical_details": "Test ProxyServer + ConnectionPool, test all proxy flows, benchmark performance, test connection pool hit rate (target >80%)",
+      "completion_criteria": "Integration tests pass, performance benchmarks meet targets"
+    },
+    {
+      "id": "P3-1",
+      "priority": "P3",
+      "title": "System Integration with Network Extension",
+      "description": "Add system-wide proxy support via Network Extension",
+      "files": [
+        "Platform/macOS/NetworkExtension/**"
+      ],
+      "estimated_hours": 80,
+      "dependencies": [],
+      "technical_details": "Requires Apple Developer Program enrollment, implement Network Extension for system-wide proxying",
+      "completion_criteria": "System-wide proxy works without manual configuration",
+      "blockers": "Requires Apple Developer Program enrollment"
+    },
+    {
+      "id": "P3-2",
+      "priority": "P3",
+      "title": "Add HTTP/2 and HTTP/3 support",
+      "description": "Modern protocol support for better performance",
+      "files": [
+        "Shared/Core/NetworkEngine/**"
+      ],
+      "estimated_hours": 80,
+      "dependencies": ["P1-1"],
+      "technical_details": "Implement HTTP/2 multiplexing, add HTTP/3/QUIC support",
+      "completion_criteria": "HTTP/2 and HTTP/3 protocols are functional"
+    },
+    {
+      "id": "P3-3",
+      "priority": "P3",
+      "title": "Documentation and User Guides",
+      "description": "Complete project documentation",
+      "files": [
+        "README.md",
+        "docs/**"
+      ],
+      "estimated_hours": 24,
+      "dependencies": [],
+      "technical_details": "Write user guide, API documentation, troubleshooting guide, video tutorials",
+      "completion_criteria": "Comprehensive documentation is available"
+    }
+  ],
+  "sprint_plan": {
+    "sprint_1": {
+      "name": "Critical Fixes",
+      "duration": "3-4 days",
+      "tasks": ["P0-1", "P0-2", "P0-3"]
+    },
+    "sprint_2": {
+      "name": "Core Functionality",
+      "duration": "2 weeks",
+      "tasks": ["P1-1", "P1-2", "P1-3", "P1-4", "P1-5"]
+    },
+    "sprint_3": {
+      "name": "UI/UX Features",
+      "duration": "2 weeks",
+      "tasks": ["P2-1", "P2-2", "P2-3"]
+    },
+    "sprint_4": {
+      "name": "Advanced Features",
+      "duration": "2 weeks",
+      "tasks": ["P2-4", "P2-5", "P2-6"]
+    },
+    "sprint_5": {
+      "name": "System Integration",
+      "duration": "3-4 weeks",
+      "tasks": ["P3-1", "P3-2", "P3-3"]
+    }
+  },
+  "summary": {
+    "total_tasks": 19,
+    "p0_blocking": 3,
+    "p1_high": 5,
+    "p2_medium": 6,
+    "p3_low": 3,
+    "total_estimated_hours": 532,
+    "estimated_completion": "8-10 weeks with 2 developers",
+    "immediate_actions": [
+      "Fix test imports to unblock testing",
+      "Add 'make app' target for documented workflow",
+      "Fix NotificationManager async issues for release builds"
+    ]
+  }
+}

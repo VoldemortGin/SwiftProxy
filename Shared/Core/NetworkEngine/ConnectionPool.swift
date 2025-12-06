@@ -36,8 +36,13 @@ public actor ConnectionPool {
         self.healthCheckInterval = healthCheckInterval
         self.logger = logger
 
-        // Start cleanup task
-        startCleanupTask()
+        // Use nonisolated wrapper to avoid calling actor-isolated method from init
+        initializeCleanupTask()
+    }
+
+    /// Nonisolated wrapper to start cleanup task asynchronously
+    nonisolated private func initializeCleanupTask() {
+        Task { await startCleanupTask() }
     }
 
     // MARK: - Connection Management

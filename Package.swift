@@ -5,6 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "SwiftProxy",
+    defaultLocalization: "en",
     platforms: [
         .macOS(.v13),
         .iOS(.v16),
@@ -32,7 +33,11 @@ let package = Package(
                 "Core/",
                 "Models/",
                 "Services/",
-                "Errors/"
+                "Errors/",
+                "UI/"
+            ],
+            resources: [
+                .process("Resources/Localization")
             ],
             swiftSettings: [
                 .define("SWIFT_PACKAGE")
@@ -44,6 +49,10 @@ let package = Package(
             name: "SimpleSwiftProxy",
             dependencies: ["SwiftProxyCore"],
             path: "Platform/macOS",
+            exclude: [
+                "UI/Views/BackupRestoreView.swift.disabled",
+                "UI/ViewModels/BackupRestoreViewModel.swift.disabled"
+            ],
             swiftSettings: [
                 .unsafeFlags(["-warnings-as-errors"], .when(configuration: .release))
             ]
@@ -53,7 +62,11 @@ let package = Package(
         .testTarget(
             name: "SwiftProxyTests",
             dependencies: ["SwiftProxyCore"],
-            path: "SwiftProxyTests"
+            path: "SwiftProxyTests",
+            exclude: [
+                "TEST_SUMMARY.md",
+                "README.md"
+            ]
         ),
         .testTarget(
             name: "SwiftProxyIntegrationTests",

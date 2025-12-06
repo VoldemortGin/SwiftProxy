@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftProxyCore
 
 /// A prominent toggle control for enabling/disabling the proxy
 /// Features smooth animations and visual feedback
@@ -35,7 +36,6 @@ struct ProxyToggle: View {
                         Image(systemName: isEnabled ? "lock.shield.fill" : "lock.shield")
                             .font(.system(size: 48))
                             .foregroundColor(.white)
-                            .symbolEffect(.bounce, value: isEnabled)
 
                         // Status text
                         Text(isEnabled ? "Proxy Enabled" : "Proxy Disabled")

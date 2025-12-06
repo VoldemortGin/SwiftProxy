@@ -342,24 +342,36 @@ public struct NetworkQuality {
 public final class ReachabilityChecker {
     private let logger = Logger.networkLog
 
-    /// Test if a specific host is reachable
+    /// Test if a specific host is reachability
     public func checkReachability(to host: String, port: UInt16 = 80, timeout: TimeInterval = 5.0) async -> Bool {
         return await withCheckedContinuation { continuation in
             let endpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(host), port: NWEndpoint.Port(rawValue: port)!)
             let connection = NWConnection(to: endpoint, using: .tcp)
+            var didResume = false
 
-            let timeoutTimer = DispatchQueue.global().asyncAfter(deadline: .now() + timeout) {
+            // Create cancellable timeout work item
+            let timeoutWork = DispatchWorkItem {
+                guard !didResume else { return }
+                didResume = true
                 connection.cancel()
                 continuation.resume(returning: false)
             }
 
+            DispatchQueue.global().asyncAfter(deadline: .now() + timeout, execute: timeoutWork)
+
             connection.stateUpdateHandler = { state in
+                guard !didResume else { return }
+
                 switch state {
                 case .ready:
+                    didResume = true
+                    timeoutWork.cancel()  // Cancel the timeout
                     connection.cancel()
                     continuation.resume(returning: true)
 
                 case .failed, .cancelled:
+                    didResume = true
+                    timeoutWork.cancel()  // Cancel the timeout
                     connection.cancel()
                     continuation.resume(returning: false)
 

@@ -511,7 +511,7 @@ public final class ProxyService: ProxyServiceProtocol {
             return // Service doesn't support proxies
         }
 
-        var proxyDict = configuration.toSystemConfigDict()
+        let proxyDict = configuration.toSystemConfigDict()
 
         SCNetworkProtocolSetConfiguration(protocolConfig, proxyDict as CFDictionary)
     }

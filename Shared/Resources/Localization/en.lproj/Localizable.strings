@@ -1,0 +1,180 @@
+/* SwiftProxy - English Localization */
+
+/* App Name */
+"app_name" = "SwiftProxy";
+"app_description" = "High-performance network proxy";
+
+/* Tabs */
+"tab_proxy" = "Proxy";
+"tab_connections" = "Connections";
+"tab_statistics" = "Statistics";
+"tab_settings" = "Settings";
+
+/* Status */
+"status_active" = "Active";
+"status_inactive" = "Inactive";
+"status_connected" = "Connected";
+"status_connecting" = "Connecting...";
+"status_disconnected" = "Disconnected";
+"status_error" = "Error";
+
+/* Proxy Toggle */
+"proxy_enabled" = "Proxy Enabled";
+"proxy_disabled" = "Proxy Disabled";
+"proxy_enable" = "Enable";
+"proxy_disable" = "Disable";
+"proxy_toggle" = "Toggle Proxy";
+
+/* Configuration */
+"config_name" = "Configuration Name";
+"config_type" = "Type";
+"config_host" = "Host";
+"config_port" = "Port";
+"config_username" = "Username";
+"config_password" = "Password";
+"config_requires_auth" = "Requires Authentication";
+"config_no_selection" = "No proxy configuration selected";
+"config_new" = "New Configuration";
+"config_edit" = "Edit Configuration";
+"config_delete" = "Delete Configuration";
+"config_duplicate" = "Duplicate Configuration";
+"config_import" = "Import Configuration";
+"config_export" = "Export Configuration";
+
+/* Statistics */
+"stats_requests" = "Requests";
+"stats_downloaded" = "Downloaded";
+"stats_uploaded" = "Uploaded";
+"stats_total_bytes_in" = "Total Bytes In";
+"stats_total_bytes_out" = "Total Bytes Out";
+"stats_active_connections" = "Active Connections";
+"stats_total_connections" = "Total Connections";
+"stats_success_rate" = "Success Rate";
+"stats_average_latency" = "Average Latency";
+"stats_peak_bandwidth" = "Peak Bandwidth";
+"stats_export" = "Export Statistics";
+"stats_clear" = "Clear Statistics";
+
+/* Rules */
+"rules_title" = "Rules";
+"rules_add" = "Add Rule";
+"rules_edit" = "Edit Rule";
+"rules_delete" = "Delete Rule";
+"rules_import" = "Import Rules";
+"rules_export" = "Export Rules";
+"rules_type" = "Rule Type";
+"rules_pattern" = "Pattern";
+"rules_policy" = "Policy";
+"rules_enabled" = "Enabled";
+
+/* Settings */
+"settings_general" = "General";
+"settings_network" = "Network";
+"settings_security" = "Security";
+"settings_advanced" = "Advanced";
+"settings_about" = "About";
+"settings_launch_at_login" = "Launch at Login";
+"settings_show_in_menu_bar" = "Show in Menu Bar";
+"settings_notifications" = "Notifications";
+"settings_dark_mode" = "Dark Mode";
+"settings_language" = "Language";
+
+/* Backup & Restore */
+"backup_title" = "Backup & Restore";
+"backup_create" = "Create Backup";
+"backup_restore" = "Restore Backup";
+"backup_auto" = "Automatic Backup";
+"backup_location" = "Backup Location";
+"backup_last" = "Last Backup";
+"backup_list" = "Backup List";
+"backup_delete" = "Delete Backup";
+
+/* Import/Export */
+"import_title" = "Import Configuration";
+"import_from_file" = "Import from File";
+"import_from_url" = "Import from URL";
+"import_from_clipboard" = "Import from Clipboard";
+"export_title" = "Export Configuration";
+"export_as_json" = "Export as JSON";
+"export_as_surge" = "Export as Surge Format";
+"export_success" = "Configuration exported successfully";
+"import_success" = "Configuration imported successfully";
+
+/* Onboarding */
+"onboarding_welcome_title" = "Welcome to SwiftProxy";
+"onboarding_welcome_message" = "A powerful and elegant network proxy for macOS";
+"onboarding_features_title" = "Key Features";
+"onboarding_features_message" = "Multi-protocol support, intelligent rules, and real-time statistics";
+"onboarding_setup_title" = "Initial Setup";
+"onboarding_setup_message" = "Let's configure your first proxy connection";
+"onboarding_permissions_title" = "Permissions";
+"onboarding_permissions_message" = "SwiftProxy needs some permissions to work properly";
+"onboarding_complete_title" = "All Set!";
+"onboarding_complete_message" = "You're ready to start using SwiftProxy";
+"onboarding_next" = "Next";
+"onboarding_skip" = "Skip";
+"onboarding_finish" = "Finish";
+"onboarding_previous" = "Previous";
+
+/* Actions */
+"action_save" = "Save";
+"action_cancel" = "Cancel";
+"action_delete" = "Delete";
+"action_edit" = "Edit";
+"action_refresh" = "Refresh";
+"action_clear" = "Clear";
+"action_reset" = "Reset";
+"action_apply" = "Apply";
+"action_ok" = "OK";
+"action_close" = "Close";
+"action_open" = "Open";
+"action_browse" = "Browse";
+
+/* Errors */
+"error_title" = "Error";
+"error_network" = "Network error occurred";
+"error_configuration" = "Configuration error";
+"error_connection_failed" = "Connection failed";
+"error_auth_failed" = "Authentication failed";
+"error_invalid_input" = "Invalid input";
+"error_file_not_found" = "File not found";
+"error_permission_denied" = "Permission denied";
+
+/* Confirmations */
+"confirm_delete_title" = "Confirm Delete";
+"confirm_delete_message" = "Are you sure you want to delete this item?";
+"confirm_reset_title" = "Confirm Reset";
+"confirm_reset_message" = "This will reset all settings to default. Continue?";
+"confirm_clear_title" = "Confirm Clear";
+"confirm_clear_message" = "This will clear all data. Continue?";
+
+/* Accessibility */
+"accessibility_proxy_toggle" = "Toggle proxy on or off";
+"accessibility_status_indicator" = "Proxy status indicator";
+"accessibility_configuration_list" = "List of proxy configurations";
+"accessibility_statistics_chart" = "Statistics chart";
+"accessibility_settings_panel" = "Settings panel";
+"accessibility_menu_bar" = "Menu bar icon";
+
+/* Notifications */
+"notification_proxy_enabled" = "Proxy enabled";
+"notification_proxy_disabled" = "Proxy disabled";
+"notification_config_saved" = "Configuration saved";
+"notification_backup_created" = "Backup created successfully";
+"notification_restore_complete" = "Restore completed successfully";
+
+/* Menu */
+"menu_about" = "About SwiftProxy";
+"menu_preferences" = "Preferences...";
+"menu_quit" = "Quit SwiftProxy";
+"menu_show_main_window" = "Open SwiftProxy";
+"menu_quick_status" = "Show Quick Status";
+
+/* Misc */
+"loading" = "Loading...";
+"no_data" = "No data available";
+"search" = "Search";
+"filter" = "Filter";
+"sort" = "Sort";
+"view_details" = "View Details";
+"hide_details" = "Hide Details";

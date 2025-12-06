@@ -270,7 +270,13 @@ public actor StatisticsBatcher {
         self.onFlush = onFlush
         self.logger = logger
 
-        startFlushTimer()
+        // Use nonisolated wrapper to avoid calling actor-isolated method from init
+        initializeFlushTimer()
+    }
+
+    /// Nonisolated wrapper to start flush timer asynchronously
+    nonisolated private func initializeFlushTimer() {
+        Task { await startFlushTimer() }
     }
 
     // MARK: - Update Management
@@ -542,6 +548,480 @@ public struct MetricData {
         return sorted[Swift.min(index, sorted.count - 1)]
     }
 }
+
+// MARK: - CPU and System Monitoring
+
+/// Monitors system resource usage (CPU, memory)
+public actor SystemResourceMonitor {
+    // MARK: - Properties
+
+    private let logger: OSLog
+    private var monitoringTask: Task<Void, Never>?
+    private let updateInterval: TimeInterval
+
+    // Resource metrics
+    private var cpuUsage: Double = 0
+    private var memoryUsage: UInt64 = 0
+    private var memoryPressure: MemoryPressureHandler.MemoryPressureLevel = .normal
+
+    // History for trending
+    private var cpuHistory: [ResourceSample] = []
+    private var memoryHistory: [ResourceSample] = []
+    private let maxHistorySize: Int = 300 // 5 minutes at 1s interval
+
+    // MARK: - Initialization
+
+    public init(
+        updateInterval: TimeInterval = 1.0,
+        logger: OSLog = Logger.performanceLog
+    ) {
+        self.updateInterval = updateInterval
+        self.logger = logger
+    }
+
+    // MARK: - Monitoring
+
+    public func startMonitoring() {
+        stopMonitoring()
+
+        monitoringTask = Task {
+            while !Task.isCancelled {
+                await updateMetrics()
+                try? await Task.sleep(nanoseconds: UInt64(updateInterval * 1_000_000_000))
+            }
+        }
+
+        os_log(.info, log: logger, "System resource monitoring started")
+    }
+
+    public func stopMonitoring() {
+        monitoringTask?.cancel()
+        monitoringTask = nil
+        os_log(.info, log: logger, "System resource monitoring stopped")
+    }
+
+    private func updateMetrics() {
+        let timestamp = Date()
+
+        // Update CPU usage
+        let cpu = getCPUUsage()
+        cpuUsage = cpu
+        cpuHistory.append(ResourceSample(timestamp: timestamp, value: cpu))
+
+        // Update memory usage
+        let memory = getMemoryUsage()
+        memoryUsage = memory
+        memoryHistory.append(ResourceSample(timestamp: timestamp, value: Double(memory)))
+
+        // Trim history
+        if cpuHistory.count > maxHistorySize {
+            cpuHistory.removeFirst(cpuHistory.count - maxHistorySize)
+        }
+        if memoryHistory.count > maxHistorySize {
+            memoryHistory.removeFirst(memoryHistory.count - maxHistorySize)
+        }
+
+        // Log warnings if needed
+        if cpu > 80.0 {
+            os_log(.default, log: logger, "⚠️ High CPU usage: %.1f%%", cpu)
+        }
+        if Double(memory) / Double(getSystemMemory()) > 0.8 {
+            os_log(.default, log: logger, "⚠️ High memory usage: %lld MB", memory / 1024 / 1024)
+        }
+    }
+
+    // MARK: - Metrics Retrieval
+
+    public func getCurrentMetrics() -> SystemResourceMetrics {
+        SystemResourceMetrics(
+            cpuUsage: cpuUsage,
+            memoryUsage: memoryUsage,
+            memoryPressure: memoryPressure,
+            timestamp: Date()
+        )
+    }
+
+    public func getMetricsHistory() -> ResourceMetricsHistory {
+        ResourceMetricsHistory(
+            cpuHistory: cpuHistory,
+            memoryHistory: memoryHistory
+        )
+    }
+
+    public func getMetricsSummary() -> ResourceMetricsSummary {
+        let cpuValues = cpuHistory.map { $0.value }
+        let memoryValues = memoryHistory.map { $0.value }
+
+        return ResourceMetricsSummary(
+            cpu: MetricsSummaryData(
+                current: cpuUsage,
+                average: cpuValues.isEmpty ? 0 : cpuValues.reduce(0, +) / Double(cpuValues.count),
+                min: cpuValues.min() ?? 0,
+                max: cpuValues.max() ?? 0,
+                p50: percentile(cpuValues, 0.5),
+                p95: percentile(cpuValues, 0.95),
+                p99: percentile(cpuValues, 0.99)
+            ),
+            memory: MetricsSummaryData(
+                current: Double(memoryUsage),
+                average: memoryValues.isEmpty ? 0 : memoryValues.reduce(0, +) / Double(memoryValues.count),
+                min: memoryValues.min() ?? 0,
+                max: memoryValues.max() ?? 0,
+                p50: percentile(memoryValues, 0.5),
+                p95: percentile(memoryValues, 0.95),
+                p99: percentile(memoryValues, 0.99)
+            ),
+            systemMemory: getSystemMemory()
+        )
+    }
+
+    // MARK: - System Metrics
+
+    private func getCPUUsage() -> Double {
+        var totalUsageOfCPU: Double = 0.0
+        var threadsList: thread_act_array_t?
+        var threadsCount = mach_msg_type_number_t(0)
+        let threadsResult = withUnsafeMutablePointer(to: &threadsList) {
+            $0.withMemoryRebound(to: thread_act_array_t?.self, capacity: 1) {
+                task_threads(mach_task_self_, $0, &threadsCount)
+            }
+        }
+
+        guard threadsResult == KERN_SUCCESS, let threadsList = threadsList else {
+            return 0.0
+        }
+
+        defer {
+            vm_deallocate(mach_task_self_, vm_address_t(UInt(bitPattern: threadsList)), vm_size_t(Int(threadsCount) * MemoryLayout<thread_t>.stride))
+        }
+
+        for index in 0..<Int(threadsCount) {
+            var threadInfo = thread_basic_info()
+            var threadInfoCount = mach_msg_type_number_t(THREAD_INFO_MAX)
+            let infoResult = withUnsafeMutablePointer(to: &threadInfo) {
+                $0.withMemoryRebound(to: integer_t.self, capacity: 1) {
+                    thread_info(threadsList[index], thread_flavor_t(THREAD_BASIC_INFO), $0, &threadInfoCount)
+                }
+            }
+
+            guard infoResult == KERN_SUCCESS else {
+                continue
+            }
+
+            let threadBasicInfo = threadInfo
+            if threadBasicInfo.flags & TH_FLAGS_IDLE == 0 {
+                totalUsageOfCPU += (Double(threadBasicInfo.cpu_usage) / Double(TH_USAGE_SCALE)) * 100.0
+            }
+        }
+
+        return totalUsageOfCPU
+    }
+
+    private func getMemoryUsage() -> UInt64 {
+        var info = mach_task_basic_info()
+        var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size) / 4
+
+        let result = withUnsafeMutablePointer(to: &info) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: 1) {
+                task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
+            }
+        }
+
+        return result == KERN_SUCCESS ? info.resident_size : 0
+    }
+
+    private func getSystemMemory() -> UInt64 {
+        ProcessInfo.processInfo.physicalMemory
+    }
+
+    private func percentile(_ values: [Double], _ p: Double) -> Double {
+        guard !values.isEmpty else { return 0 }
+        let sorted = values.sorted()
+        let index = Int(Double(sorted.count) * p)
+        return sorted[min(index, sorted.count - 1)]
+    }
+}
+
+public struct ResourceSample {
+    public let timestamp: Date
+    public let value: Double
+}
+
+public struct SystemResourceMetrics {
+    public let cpuUsage: Double
+    public let memoryUsage: UInt64
+    public let memoryPressure: MemoryPressureHandler.MemoryPressureLevel
+    public let timestamp: Date
+
+    public var memoryUsageMB: Double {
+        Double(memoryUsage) / 1024.0 / 1024.0
+    }
+}
+
+public struct ResourceMetricsHistory {
+    public let cpuHistory: [ResourceSample]
+    public let memoryHistory: [ResourceSample]
+}
+
+public struct MetricsSummaryData {
+    public let current: Double
+    public let average: Double
+    public let min: Double
+    public let max: Double
+    public let p50: Double
+    public let p95: Double
+    public let p99: Double
+}
+
+public struct ResourceMetricsSummary {
+    public let cpu: MetricsSummaryData
+    public let memory: MetricsSummaryData
+    public let systemMemory: UInt64
+
+    public var memoryUsagePercentage: Double {
+        (memory.current / Double(systemMemory)) * 100.0
+    }
+}
+
+// MARK: - Comprehensive Performance Dashboard
+
+/// Centralized performance dashboard that aggregates all metrics
+public actor PerformanceDashboard {
+    // MARK: - Properties
+
+    private let metricsCollector: PerformanceMetricsCollector
+    private let resourceMonitor: SystemResourceMonitor
+    private let logger: OSLog
+
+    // External components to monitor
+    private weak var connectionPool: ConnectionPool?
+    private var latencyTracker: LatencyTracker
+
+    // MARK: - Initialization
+
+    public init(
+        connectionPool: ConnectionPool? = nil,
+        logger: OSLog = Logger.performanceLog
+    ) {
+        self.metricsCollector = PerformanceMetricsCollector(logger: logger)
+        self.resourceMonitor = SystemResourceMonitor(logger: logger)
+        self.connectionPool = connectionPool
+        self.latencyTracker = LatencyTracker()
+        self.logger = logger
+    }
+
+    // MARK: - Lifecycle
+
+    public func start() async {
+        await resourceMonitor.startMonitoring()
+        os_log(.info, log: logger, "Performance dashboard started")
+    }
+
+    public func stop() async {
+        await resourceMonitor.stopMonitoring()
+        os_log(.info, log: logger, "Performance dashboard stopped")
+    }
+
+    // MARK: - Metrics Recording
+
+    public func recordLatency(_ latency: TimeInterval, operation: String) async {
+        await metricsCollector.recordDuration("\(operation)_latency", duration: latency)
+        latencyTracker.record(latency, operation: operation)
+    }
+
+    public func recordValue(_ name: String, value: Double) async {
+        await metricsCollector.recordValue(name, value: value)
+    }
+
+    public func increment(_ name: String) async {
+        await metricsCollector.increment(name)
+    }
+
+    // MARK: - Dashboard Data
+
+    public func getDashboardData() async -> PerformanceDashboardData {
+        let systemMetrics = await resourceMonitor.getCurrentMetrics()
+        let resourceSummary = await resourceMonitor.getMetricsSummary()
+        let allMetrics = await metricsCollector.getAllMetrics()
+
+        // Get connection pool stats
+        var poolHitRate: Double = 0
+        var poolStats: PoolStatistics?
+        if let pool = connectionPool {
+            poolStats = await pool.getStatistics()
+            poolHitRate = await pool.getHitRate()
+        }
+
+        // Get latency distribution
+        let latencyDistribution = latencyTracker.getDistribution()
+
+        return PerformanceDashboardData(
+            systemMetrics: systemMetrics,
+            resourceSummary: resourceSummary,
+            connectionPoolHitRate: poolHitRate,
+            connectionPoolStats: poolStats,
+            latencyDistribution: latencyDistribution,
+            customMetrics: allMetrics,
+            timestamp: Date()
+        )
+    }
+
+    // MARK: - Reporting
+
+    public func generateReport() async -> String {
+        let data = await getDashboardData()
+
+        var report = "=== SwiftProxy Performance Report ===\n"
+        report += "Generated: \(data.timestamp)\n\n"
+
+        // System Resources
+        report += "System Resources:\n"
+        report += "  CPU Usage: \(String(format: "%.1f%%", data.systemMetrics.cpuUsage))\n"
+        report += "  Memory: \(String(format: "%.1f MB", data.systemMetrics.memoryUsageMB))\n"
+        report += "  Memory %: \(String(format: "%.1f%%", data.resourceSummary.memoryUsagePercentage))\n\n"
+
+        // Connection Pool
+        if let poolStats = data.connectionPoolStats {
+            report += "Connection Pool:\n"
+            report += "  Hit Rate: \(String(format: "%.1f%%", data.connectionPoolHitRate * 100))\n"
+            report += "  Active: \(poolStats.activeConnections)\n"
+            report += "  Available: \(poolStats.availableConnections)\n"
+            report += "  Total Created: \(poolStats.totalCreated)\n\n"
+        }
+
+        // Latency Distribution
+        report += "Request Latency:\n"
+        report += "  P50: \(String(format: "%.2f ms", data.latencyDistribution.p50 * 1000))\n"
+        report += "  P90: \(String(format: "%.2f ms", data.latencyDistribution.p90 * 1000))\n"
+        report += "  P95: \(String(format: "%.2f ms", data.latencyDistribution.p95 * 1000))\n"
+        report += "  P99: \(String(format: "%.2f ms", data.latencyDistribution.p99 * 1000))\n\n"
+
+        // Custom Metrics
+        if !data.customMetrics.isEmpty {
+            report += "Custom Metrics:\n"
+            for (name, metric) in data.customMetrics.sorted(by: { $0.key < $1.key }) {
+                report += "  \(name):\n"
+                report += "    Avg: \(String(format: "%.3f", metric.average))\n"
+                report += "    P95: \(String(format: "%.3f", metric.p95))\n"
+            }
+        }
+
+        return report
+    }
+
+    public func exportToJSON() async throws -> Data {
+        let data = await getDashboardData()
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+        return try encoder.encode(data)
+    }
+
+    public func exportToCSV() async -> String {
+        let data = await getDashboardData()
+
+        var csv = "Metric,Value,Unit\n"
+
+        // System metrics
+        csv += "CPU Usage,\(data.systemMetrics.cpuUsage),%\n"
+        csv += "Memory Usage,\(data.systemMetrics.memoryUsageMB),MB\n"
+        csv += "Memory Usage Percentage,\(data.resourceSummary.memoryUsagePercentage),%\n"
+
+        // Pool metrics
+        if let poolStats = data.connectionPoolStats {
+            csv += "Connection Pool Hit Rate,\(data.connectionPoolHitRate * 100),%\n"
+            csv += "Active Connections,\(poolStats.activeConnections),count\n"
+            csv += "Available Connections,\(poolStats.availableConnections),count\n"
+        }
+
+        // Latency metrics
+        csv += "Latency P50,\(data.latencyDistribution.p50 * 1000),ms\n"
+        csv += "Latency P90,\(data.latencyDistribution.p90 * 1000),ms\n"
+        csv += "Latency P95,\(data.latencyDistribution.p95 * 1000),ms\n"
+        csv += "Latency P99,\(data.latencyDistribution.p99 * 1000),ms\n"
+
+        return csv
+    }
+}
+
+// MARK: - Latency Tracker
+
+struct LatencyTracker {
+    private var samples: [TimeInterval] = []
+    private let maxSamples = 10000
+
+    mutating func record(_ latency: TimeInterval, operation: String) {
+        samples.append(latency)
+        if samples.count > maxSamples {
+            samples.removeFirst(samples.count - maxSamples)
+        }
+    }
+
+    func getDistribution() -> LatencyDistribution {
+        guard !samples.isEmpty else {
+            return LatencyDistribution(p50: 0, p90: 0, p95: 0, p99: 0, average: 0, min: 0, max: 0)
+        }
+
+        let sorted = samples.sorted()
+        let count = sorted.count
+
+        return LatencyDistribution(
+            p50: sorted[Int(Double(count) * 0.5)],
+            p90: sorted[Int(Double(count) * 0.9)],
+            p95: sorted[Int(Double(count) * 0.95)],
+            p99: sorted[Int(Double(count) * 0.99)],
+            average: samples.reduce(0, +) / Double(count),
+            min: sorted.first ?? 0,
+            max: sorted.last ?? 0
+        )
+    }
+}
+
+public struct LatencyDistribution: Codable {
+    public let p50: TimeInterval
+    public let p90: TimeInterval
+    public let p95: TimeInterval
+    public let p99: TimeInterval
+    public let average: TimeInterval
+    public let min: TimeInterval
+    public let max: TimeInterval
+}
+
+public struct PerformanceDashboardData: Codable {
+    public let systemMetrics: SystemResourceMetrics
+    public let resourceSummary: ResourceMetricsSummary
+    public let connectionPoolHitRate: Double
+    public let connectionPoolStats: PoolStatistics?
+    public let latencyDistribution: LatencyDistribution
+    public let customMetrics: [String: MetricData]
+    public let timestamp: Date
+}
+
+// Make types Codable
+extension SystemResourceMetrics: Codable {
+    enum CodingKeys: String, CodingKey {
+        case cpuUsage, memoryUsage, timestamp
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        cpuUsage = try container.decode(Double.self, forKey: .cpuUsage)
+        memoryUsage = try container.decode(UInt64.self, forKey: .memoryUsage)
+        timestamp = try container.decode(Date.self, forKey: .timestamp)
+        memoryPressure = .normal
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(cpuUsage, forKey: .cpuUsage)
+        try container.encode(memoryUsage, forKey: .memoryUsage)
+        try container.encode(timestamp, forKey: .timestamp)
+    }
+}
+
+extension MetricsSummaryData: Codable {}
+extension ResourceMetricsSummary: Codable {}
+extension MetricData: Codable {}
 
 // MARK: - Helper Extensions
 

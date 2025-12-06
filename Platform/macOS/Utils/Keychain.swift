@@ -6,7 +6,7 @@ import SwiftProxyCore
 /// Thread-safe Keychain wrapper for secure storage of sensitive data
 /// Provides type-safe access to keychain items with automatic encoding/decoding
 /// All operations are performed synchronously on a dedicated queue for thread safety
-public final class Keychain {
+public final class Keychain: @unchecked Sendable {
     // MARK: - Properties
 
     private let serviceName: String

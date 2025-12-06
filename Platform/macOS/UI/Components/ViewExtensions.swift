@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftProxyCore
 
 // MARK: - View Extensions
 

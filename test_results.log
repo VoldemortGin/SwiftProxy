@@ -1,0 +1,454 @@
+Building for debugging...
+[0/6] Write sources
+[1/6] Write swift-version--58304C5D6DBC2206.txt
+[3/9] Compiling SwiftProxyTests ProxyViewModelTests.swift
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:115:84: error: cannot convert value of type 'String' to expected argument type 'AppError'
+113 |         } catch {
+114 |             self.error = error as? AppError ?? AppError.unknown(error)
+115 |             return ConnectionTestResult(success: false, latency: nil, error: error.localizedDescription)
+    |                                                                                    `- error: cannot convert value of type 'String' to expected argument type 'AppError'
+116 |         }
+117 |     }
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:348:34: error: missing argument label 'configuration:' in call
+346 | 
+347 |         // When
+348 |         await sut.testConnection(config)
+    |                                  `- error: missing argument label 'configuration:' in call
+349 | 
+350 |         // Then
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:352:29: error: value of type 'ProxyViewModel' has no member 'testResult'
+350 |         // Then
+351 |         XCTAssertTrue(mockProxyService.testConnectionCalled)
+352 |         XCTAssertNotNil(sut.testResult)
+    |                             `- error: value of type 'ProxyViewModel' has no member 'testResult'
+353 |         XCTAssertTrue(sut.testResult?.success ?? false)
+354 |         XCTAssertFalse(sut.isTesting)
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:353:27: error: value of type 'ProxyViewModel' has no member 'testResult'
+351 |         XCTAssertTrue(mockProxyService.testConnectionCalled)
+352 |         XCTAssertNotNil(sut.testResult)
+353 |         XCTAssertTrue(sut.testResult?.success ?? false)
+    |                           `- error: value of type 'ProxyViewModel' has no member 'testResult'
+354 |         XCTAssertFalse(sut.isTesting)
+355 |     }
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:354:28: error: value of type 'ProxyViewModel' has no member 'isTesting'
+352 |         XCTAssertNotNil(sut.testResult)
+353 |         XCTAssertTrue(sut.testResult?.success ?? false)
+354 |         XCTAssertFalse(sut.isTesting)
+    |                            `- error: value of type 'ProxyViewModel' has no member 'isTesting'
+355 |     }
+356 | 
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:369:34: error: missing argument label 'configuration:' in call
+367 | 
+368 |         // When
+369 |         await sut.testConnection(config)
+    |                                  `- error: missing argument label 'configuration:' in call
+370 | 
+371 |         // Then
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:372:29: error: value of type 'ProxyViewModel' has no member 'testResult'
+370 | 
+371 |         // Then
+372 |         XCTAssertNotNil(sut.testResult)
+    |                             `- error: value of type 'ProxyViewModel' has no member 'testResult'
+373 |         XCTAssertFalse(sut.testResult?.success ?? true)
+374 |         XCTAssertNotNil(sut.testResult?.error)
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:373:28: error: value of type 'ProxyViewModel' has no member 'testResult'
+371 |         // Then
+372 |         XCTAssertNotNil(sut.testResult)
+373 |         XCTAssertFalse(sut.testResult?.success ?? true)
+    |                            `- error: value of type 'ProxyViewModel' has no member 'testResult'
+374 |         XCTAssertNotNil(sut.testResult?.error)
+375 |     }
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:374:29: error: value of type 'ProxyViewModel' has no member 'testResult'
+372 |         XCTAssertNotNil(sut.testResult)
+373 |         XCTAssertFalse(sut.testResult?.success ?? true)
+374 |         XCTAssertNotNil(sut.testResult?.error)
+    |                             `- error: value of type 'ProxyViewModel' has no member 'testResult'
+375 |     }
+376 | 
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:408:48: error: type 'NetworkStatus' has no member 'wifi'
+406 |     func testNetworkMonitorBindings() async {
+407 |         // When
+408 |         mockNetworkMonitor.statusSubject.send(.wifi)
+    |                                                `- error: type 'NetworkStatus' has no member 'wifi'
+409 |         mockNetworkMonitor.isConnected = true
+410 | 
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:409:28: error: value of type 'MockNetworkMonitor' has no member 'isConnected'
+407 |         // When
+408 |         mockNetworkMonitor.statusSubject.send(.wifi)
+409 |         mockNetworkMonitor.isConnected = true
+    |                            `- error: value of type 'MockNetworkMonitor' has no member 'isConnected'
+410 | 
+411 |         // Wait for updates
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:415:44: error: type 'NetworkStatus' has no member 'wifi'
+413 | 
+414 |         // Then
+415 |         XCTAssertEqual(sut.networkStatus, .wifi)
+    |                                            `- error: type 'NetworkStatus' has no member 'wifi'
+416 |         XCTAssertTrue(sut.isNetworkAvailable)
+417 |     }
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:416:27: error: value of type 'ProxyViewModel' has no member 'isNetworkAvailable'
+414 |         // Then
+415 |         XCTAssertEqual(sut.networkStatus, .wifi)
+416 |         XCTAssertTrue(sut.isNetworkAvailable)
+    |                           `- error: value of type 'ProxyViewModel' has no member 'isNetworkAvailable'
+417 |     }
+418 | 
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:423:28: error: value of type 'MockNetworkMonitor' has no member 'isConnected'
+421 |     func testCanToggleProxy() async {
+422 |         // Given
+423 |         mockNetworkMonitor.isConnected = true
+    |                            `- error: value of type 'MockNetworkMonitor' has no member 'isConnected'
+424 |         mockConfigService.configurationsSubject.send([
+425 |             ProxyConfiguration(name: "Test", type: .http, host: "proxy.example.com", port: 8080)
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:432:27: error: value of type 'ProxyViewModel' has no member 'canToggleProxy'
+430 | 
+431 |         // Then
+432 |         XCTAssertTrue(sut.canToggleProxy)
+    |                           `- error: value of type 'ProxyViewModel' has no member 'canToggleProxy'
+433 | 
+434 |         // When - no network
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:435:28: error: value of type 'MockNetworkMonitor' has no member 'isConnected'
+433 | 
+434 |         // When - no network
+435 |         mockNetworkMonitor.isConnected = false
+    |                            `- error: value of type 'MockNetworkMonitor' has no member 'isConnected'
+436 | 
+437 |         // Wait
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:441:28: error: value of type 'ProxyViewModel' has no member 'canToggleProxy'
+439 | 
+440 |         // Then
+441 |         XCTAssertFalse(sut.canToggleProxy)
+    |                            `- error: value of type 'ProxyViewModel' has no member 'canToggleProxy'
+442 |     }
+443 | 
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:446:28: error: value of type 'ProxyViewModel' has no member 'statusDescription'
+444 |     func testStatusDescription() {
+445 |         // When disabled
+446 |         XCTAssertEqual(sut.statusDescription, "Disabled")
+    |                            `- error: value of type 'ProxyViewModel' has no member 'statusDescription'
+447 | 
+448 |         // When enabled
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:455:36: error: value of type 'ProxyViewModel' has no member 'statusDescription'
+453 |         let expectation = XCTestExpectation(description: "Status updated")
+454 |         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+455 |             XCTAssertTrue(self.sut.statusDescription.contains("Test"))
+    |                                    `- error: value of type 'ProxyViewModel' has no member 'statusDescription'
+456 |             expectation.fulfill()
+457 |         }
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:464:28: error: value of type 'ProxyViewModel' has no member 'hasConfigurations'
+462 |     func testHasConfigurations() async {
+463 |         // Initially false
+464 |         XCTAssertFalse(sut.hasConfigurations)
+    |                            `- error: value of type 'ProxyViewModel' has no member 'hasConfigurations'
+465 | 
+466 |         // When configurations added
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:475:27: error: value of type 'ProxyViewModel' has no member 'hasConfigurations'
+473 | 
+474 |         // Then
+475 |         XCTAssertTrue(sut.hasConfigurations)
+    |                           `- error: value of type 'ProxyViewModel' has no member 'hasConfigurations'
+476 |     }
+477 | 
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:482:26: error: value of type 'ProxyViewModel' has no member 'createNewConfiguration'
+480 |     func testCreateNewConfiguration() {
+481 |         // When
+482 |         let config = sut.createNewConfiguration()
+    |                          `- error: value of type 'ProxyViewModel' has no member 'createNewConfiguration'
+483 | 
+484 |         // Then
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:487:38: error: type 'Equatable' has no member 'http'
+485 |         XCTAssertNotNil(config)
+486 |         XCTAssertEqual(config.name, "New Proxy")
+487 |         XCTAssertEqual(config.type, .http)
+    |                                      `- error: type 'Equatable' has no member 'http'
+488 |         XCTAssertEqual(config.port, 8080)
+489 |     }
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:503:19: error: value of type 'ProxyViewModel' has no member 'duplicateConfiguration'
+501 | 
+502 |         // When
+503 |         await sut.duplicateConfiguration(original)
+    |                   `- error: value of type 'ProxyViewModel' has no member 'duplicateConfiguration'
+504 | 
+505 |         // Then
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:522:19: error: value of type 'ProxyViewModel' has no member 'quickEnable'
+520 | 
+521 |         // When
+522 |         await sut.quickEnable(config)
+    |                   `- error: value of type 'ProxyViewModel' has no member 'quickEnable'
+523 | 
+524 |         // Then
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:542:23: error: value of type 'ProxyViewModel' has no member 'clearError'
+540 | 
+541 |             // When
+542 |             await sut.clearError()
+    |                       `- error: value of type 'ProxyViewModel' has no member 'clearError'
+543 | 
+544 |             // Then
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:559:19: error: value of type 'ProxyViewModel' has no member 'refresh'
+557 | 
+558 |         // When
+559 |         await sut.refresh()
+    |                   `- error: value of type 'ProxyViewModel' has no member 'refresh'
+560 | 
+561 |         // Then - should have loaded configurations
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:622:55: error: extra argument 'isAnyProxyEnabled' in call
+620 | 
+621 |     func getCurrentSystemProxy() async throws -> SystemProxySettings {
+622 |         return SystemProxySettings(isAnyProxyEnabled: false, httpProxy: nil, httpsProxy: nil, socksProxy: nil)
+    |                                                       `- error: extra argument 'isAnyProxyEnabled' in call
+623 |     }
+624 | 
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/ViewModels/ProxyViewModelTests.swift:622:35: error: missing arguments for parameters 'httpEnabled', 'httpsEnabled', 'socksEnabled', 'httpPort', 'httpsPort', 'socksPort', 'bypassDomains' in call
+620 | 
+621 |     func getCurrentSystemProxy() async throws -> SystemProxySettings {
+622 |         return SystemProxySettings(isAnyProxyEnabled: false, httpProxy: nil, httpsProxy: nil, socksProxy: nil)
+    |                                   `- error: missing arguments for parameters 'httpEnabled', 'httpsEnabled', 'socksEnabled', 'httpPort', 'httpsPort', 'socksPort', 'bypassDomains' in call
+623 |     }
+624 | 
+
+/Users/linhan/startup/SwiftProxy/Shared/Services/ProxyService.swift:76:12: note: 'init(httpEnabled:httpsEnabled:socksEnabled:httpProxy:httpPort:httpsProxy:httpsPort:socksProxy:socksPort:bypassDomains:)' declared here
+ 74 |     public let bypassDomains: [String]
+ 75 | 
+ 76 |     public init(
+    |            `- note: 'init(httpEnabled:httpsEnabled:socksEnabled:httpProxy:httpPort:httpsProxy:httpsPort:socksProxy:socksPort:bypassDomains:)' declared here
+ 77 |         httpEnabled: Bool,
+ 78 |         httpsEnabled: Bool,
+[4/9] Emitting module SwiftProxyTests
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Services/ConfigurationServiceTests.swift:361:7: warning: non-final class 'MockKeychainService' cannot conform to 'Sendable'; use '@unchecked Sendable'; this is an error in the Swift 6 language mode
+359 | // MARK: - Mock Keychain Service
+360 | 
+361 | class MockKeychainService: KeychainServiceProtocol {
+    |       `- warning: non-final class 'MockKeychainService' cannot conform to 'Sendable'; use '@unchecked Sendable'; this is an error in the Swift 6 language mode
+362 |     private var storage: [String: String] = [:]
+363 | 
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Services/ConfigurationServiceTests.swift:362:17: warning: stored property 'storage' of 'Sendable'-conforming class 'MockKeychainService' is mutable; this is an error in the Swift 6 language mode
+360 | 
+361 | class MockKeychainService: KeychainServiceProtocol {
+362 |     private var storage: [String: String] = [:]
+    |                 `- warning: stored property 'storage' of 'Sendable'-conforming class 'MockKeychainService' is mutable; this is an error in the Swift 6 language mode
+363 | 
+364 |     func savePassword(_ password: String, for identifier: String) async throws {
+[5/9] Compiling SwiftProxyTests ProxyRuleTests.swift
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Models/ProxyRuleTests.swift:279:37: error: missing argument label 'host:' in call
+277 | 
+278 |         // When & Then
+279 |         XCTAssertFalse(rule.matches(request))
+    |                                     `- error: missing argument label 'host:' in call
+280 |     }
+281 | 
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Models/ProxyRuleTests.swift:279:37: error: cannot convert value of type 'NetworkRequest' to expected argument type 'String'
+277 | 
+278 |         // When & Then
+279 |         XCTAssertFalse(rule.matches(request))
+    |                                     `- error: cannot convert value of type 'NetworkRequest' to expected argument type 'String'
+280 |     }
+281 | 
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Models/ProxyRuleTests.swift:413:13: error: argument 'matchType' must precede argument 'pattern'
+411 |             name: "High Priority",
+412 |             pattern: "test.com",
+413 |             matchType: .domain,
+    |             `- error: argument 'matchType' must precede argument 'pattern'
+414 |             action: .proxy,
+415 |             priority: 10
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Models/ProxyRuleTests.swift:441:13: error: argument 'matchType' must precede argument 'pattern'
+439 |             name: "Second",
+440 |             pattern: "test.com",
+441 |             matchType: .domain,
+    |             `- error: argument 'matchType' must precede argument 'pattern'
+442 |             action: .proxy,
+443 |             priority: 5
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Models/ProxyRuleTests.swift:458:33: error: extra arguments at positions #7, #8 in call
+456 |     func testEncodingDecoding() throws {
+457 |         // Given
+458 |         let original = ProxyRule(
+    |                                 `- error: extra arguments at positions #7, #8 in call
+459 |             name: "Test Rule",
+460 |             matchType: .domain,
+
+/Users/linhan/startup/SwiftProxy/Shared/Core/Rules/ProxyRule.swift:109:12: note: 'init(id:name:matchType:pattern:action:priority:enabled:proxyServer:modifyHeaders:notes:)' declared here
+107 |     }
+108 | 
+109 |     public init(
+    |            `- note: 'init(id:name:matchType:pattern:action:priority:enabled:proxyServer:modifyHeaders:notes:)' declared here
+110 |         id: UUID = UUID(),
+111 |         name: String,
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Models/ProxyRuleTests.swift:537:13: error: argument 'matchType' must precede argument 'pattern'
+535 |             name: "Rule2",
+536 |             pattern: "test.com",
+537 |             matchType: .domain,
+    |             `- error: argument 'matchType' must precede argument 'pattern'
+538 |             action: .proxy
+539 |         )
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Models/ProxyRuleTests.swift:542:19: error: type 'ProxyRule' does not conform to protocol 'Hashable'
+540 | 
+541 |         // When
+542 |         var set = Set<ProxyRule>()
+    |                   `- error: type 'ProxyRule' does not conform to protocol 'Hashable'
+543 |         set.insert(rule1)
+544 |         set.insert(rule2)
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Models/ProxyRuleTests.swift:563:32: error: value of type 'ProxyRule' has no member 'description'
+561 | 
+562 |         // When
+563 |         let description = rule.description
+    |                                `- error: value of type 'ProxyRule' has no member 'description'
+564 | 
+565 |         // Then
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Models/ProxyRuleTests.swift:576:13: error: argument 'matchType' must precede argument 'pattern'
+574 |             name: "Min IP",
+575 |             pattern: "0.0.0.0",
+576 |             matchType: .ipAddress,
+    |             `- error: argument 'matchType' must precede argument 'pattern'
+577 |             action: .direct
+578 |         )
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Models/ProxyRuleTests.swift:585:13: error: argument 'matchType' must precede argument 'pattern'
+583 |             name: "Max IP",
+584 |             pattern: "255.255.255.255",
+585 |             matchType: .ipAddress,
+    |             `- error: argument 'matchType' must precede argument 'pattern'
+586 |             action: .direct
+587 |         )
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Models/ProxyRuleTests.swift:596:13: error: argument 'matchType' must precede argument 'pattern'
+594 |             name: "All IPs",
+595 |             pattern: "0.0.0.0/0",
+596 |             matchType: .ipCIDR,
+    |             `- error: argument 'matchType' must precede argument 'pattern'
+597 |             action: .direct
+598 |         )
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Models/ProxyRuleTests.swift:605:13: error: argument 'matchType' must precede argument 'pattern'
+603 |             name: "Single IP",
+604 |             pattern: "192.168.1.1/32",
+605 |             matchType: .ipCIDR,
+    |             `- error: argument 'matchType' must precede argument 'pattern'
+606 |             action: .direct
+607 |         )
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Models/ProxyRuleTests.swift:616:13: error: argument 'matchType' must precede argument 'pattern'
+614 |             name: "Complex Regex",
+615 |             pattern: "^https?://([a-z0-9]+\\.)*example\\.(com|org|net)/.*$",
+616 |             matchType: .domainRegex,
+    |             `- error: argument 'matchType' must precede argument 'pattern'
+617 |             action: .proxy
+618 |         )
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Models/ProxyRuleTests.swift:648:13: error: argument 'matchType' must precede argument 'pattern'
+646 |             name: "Regex",
+647 |             pattern: "^https://.*\\.example\\.com/.*$",
+648 |             matchType: .domainRegex,
+    |             `- error: argument 'matchType' must precede argument 'pattern'
+649 |             action: .proxy
+650 |         )
+[6/9] Compiling SwiftProxyTests KeychainTests.swift
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Utils/KeychainTests.swift:369:25: error: cannot convert value of type '[String : Data]' to expected argument type '[(key: String, value: String)]'
+367 | 
+368 |         // When
+369 |         try sut.setBulk(items)
+    |                         `- error: cannot convert value of type '[String : Data]' to expected argument type '[(key: String, value: String)]'
+370 | 
+371 |         // Then
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Utils/KeychainTests.swift:390:9: error: conflicting arguments to generic parameter 'T' ('String?' vs. 'Data?')
+388 |         // Then
+389 |         XCTAssertEqual(results.count, 3)
+390 |         XCTAssertEqual(results["key1"], "value1".data(using: .utf8))
+    |         `- error: conflicting arguments to generic parameter 'T' ('String?' vs. 'Data?')
+391 |         XCTAssertEqual(results["key2"], "value2".data(using: .utf8))
+392 |         XCTAssertEqual(results["key3"], "value3".data(using: .utf8))
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Utils/KeychainTests.swift:391:9: error: conflicting arguments to generic parameter 'T' ('String?' vs. 'Data?')
+389 |         XCTAssertEqual(results.count, 3)
+390 |         XCTAssertEqual(results["key1"], "value1".data(using: .utf8))
+391 |         XCTAssertEqual(results["key2"], "value2".data(using: .utf8))
+    |         `- error: conflicting arguments to generic parameter 'T' ('String?' vs. 'Data?')
+392 |         XCTAssertEqual(results["key3"], "value3".data(using: .utf8))
+393 |     }
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Utils/KeychainTests.swift:392:9: error: conflicting arguments to generic parameter 'T' ('String?' vs. 'Data?')
+390 |         XCTAssertEqual(results["key1"], "value1".data(using: .utf8))
+391 |         XCTAssertEqual(results["key2"], "value2".data(using: .utf8))
+392 |         XCTAssertEqual(results["key3"], "value3".data(using: .utf8))
+    |         `- error: conflicting arguments to generic parameter 'T' ('String?' vs. 'Data?')
+393 |     }
+394 | 
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Utils/KeychainTests.swift:432:23: error: value of type 'MockKeychain' has no member 'deleteAsync'
+430 | 
+431 |         // When - delete
+432 |         try await sut.deleteAsync(forKey: key)
+    |                       `- error: value of type 'MockKeychain' has no member 'deleteAsync'
+433 | 
+434 |         // Then
+[7/9] Compiling SwiftProxyTests SSLHandlerTests.swift
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Core/NetworkEngine/SSLHandlerTests.swift:13:22: warning: no 'async' operations occur within 'await' expression
+ 11 |     override func setUp() async throws {
+ 12 |         try await super.setUp()
+ 13 |         sslHandler = await SSLHandler()
+    |                      `- warning: no 'async' operations occur within 'await' expression
+ 14 |     }
+ 15 | 
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Core/NetworkEngine/SSLHandlerTests.swift:141:42: error: call to actor-isolated instance method 'getTLSConfiguration()' in a synchronous nonisolated context [#ActorIsolatedCall]
+139 | 
+140 |         // Verify policy changes don't crash
+141 |         XCTAssertNotNil(await sslHandler.getTLSConfiguration())
+    |                                          `- error: call to actor-isolated instance method 'getTLSConfiguration()' in a synchronous nonisolated context [#ActorIsolatedCall]
+142 |     }
+143 | 
+
+/Users/linhan/startup/SwiftProxy/Shared/Core/NetworkEngine/SSLHandler.swift:439:17: note: calls to instance method 'getTLSConfiguration()' from outside of its actor context are implicitly asynchronous
+437 | 
+438 |     /// Get current TLS configuration
+439 |     public func getTLSConfiguration() -> TLSConfiguration {
+    |                 `- note: calls to instance method 'getTLSConfiguration()' from outside of its actor context are implicitly asynchronous
+440 |         return tlsConfiguration
+441 |     }
+
+/Users/linhan/startup/SwiftProxy/SwiftProxyTests/Core/NetworkEngine/SSLHandlerTests.swift:141:25: error: 'await' in an autoclosure that does not support concurrency
+139 | 
+140 |         // Verify policy changes don't crash
+141 |         XCTAssertNotNil(await sslHandler.getTLSConfiguration())
+    |                         `- error: 'await' in an autoclosure that does not support concurrency
+142 |     }
+143 | 
+
+[#ActorIsolatedCall]: <https://docs.swift.org/compiler/documentation/diagnostics/actor-isolated-call>
+error: fatalError

@@ -6,16 +6,16 @@ import Charts
 struct StatChart: View {
     // MARK: - Properties
 
-    let data: [ChartDataPoint]
+    let data: [StatChartDataPoint]
     let chartType: ChartType
     let timeRange: TimeRange
 
-    @State private var selectedDataPoint: ChartDataPoint?
+    @State private var selectedDataPoint: StatChartDataPoint?
 
     // MARK: - Initialization
 
     init(
-        data: [ChartDataPoint],
+        data: [StatChartDataPoint],
         chartType: ChartType = .line,
         timeRange: TimeRange = .hour
     ) {
@@ -120,11 +120,10 @@ struct StatChart: View {
                     x: .value("Time", point.timestamp),
                     y: .value("Requests", point.value)
                 )
-                .foregroundStyle(.accentColor)
+                .foregroundStyle(Color.accentColor)
                 .symbolSize(100)
             }
         }
-        .chartAngleSelection(value: $selectedDataPoint)
     }
 
     private var barChart: some View {
@@ -136,7 +135,6 @@ struct StatChart: View {
             .foregroundStyle(by: .value("Type", point.category))
             .opacity(selectedDataPoint?.id == point.id ? 1.0 : 0.7)
         }
-        .chartAngleSelection(value: $selectedDataPoint)
     }
 
     private var areaChart: some View {
@@ -156,7 +154,6 @@ struct StatChart: View {
             .foregroundStyle(by: .value("Type", point.category))
             .interpolationMethod(.catmullRom)
         }
-        .chartAngleSelection(value: $selectedDataPoint)
     }
 
     private var chartTypePicker: some View {
@@ -177,7 +174,7 @@ struct StatChart: View {
         .frame(width: 120)
     }
 
-    private func selectedPointInfo(_ point: ChartDataPoint) -> some View {
+    private func selectedPointInfo(_ point: StatChartDataPoint) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Selected Time")
@@ -311,7 +308,7 @@ struct StatChart: View {
 
 // MARK: - Supporting Types
 
-struct ChartDataPoint: Identifiable {
+struct StatChartDataPoint: Identifiable {
     let id = UUID()
     let timestamp: Date
     let value: Int
@@ -384,10 +381,10 @@ enum TimeRange {
 }
 
 // Helper function for previews
-private func generateSampleData(count: Int) -> [ChartDataPoint] {
+private func generateSampleData(count: Int) -> [StatChartDataPoint] {
     let now = Date()
     return (0..<count).map { i in
-        ChartDataPoint(
+        StatChartDataPoint(
             timestamp: now.addingTimeInterval(TimeInterval(-i * 3600)),
             value: Int.random(in: 10...100),
             category: "Requests"

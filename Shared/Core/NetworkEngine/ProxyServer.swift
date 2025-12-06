@@ -175,66 +175,49 @@ public actor ProxyServer {
             return
         }
 
-        var connectionAdded = false
+        // Create proxy connection based on type
+        let connection: ProxyConnection
 
-        do {
-            // Create proxy connection based on type
-            let connection: ProxyConnection
+        switch configuration.type {
+        case .http, .https:
+            connection = HTTPProxyConnection(
+                id: connectionID,
+                nwConnection: nwConnection,
+                configuration: configuration,
+                connectionPool: connectionPool,
+                sslHandler: sslHandler,
+                retryHandler: retryHandler,
+                logger: logger
+            )
 
-            switch configuration.type {
-            case .http, .https:
-                connection = HTTPProxyConnection(
-                    id: connectionID,
-                    nwConnection: nwConnection,
-                    configuration: configuration,
-                    connectionPool: connectionPool,
-                    sslHandler: sslHandler,
-                    retryHandler: retryHandler,
-                    logger: logger
-                )
-
-            case .socks5:
-                connection = SOCKS5ProxyConnection(
-                    id: connectionID,
-                    nwConnection: nwConnection,
-                    configuration: configuration,
-                    connectionPool: connectionPool,
-                    sslHandler: sslHandler,
-                    retryHandler: retryHandler,
-                    logger: logger
-                )
-            }
-
-            // Store active connection
-            activeConnections[connectionID] = connection
-            connectionAdded = true
-
-            // Update statistics
-            statistics.totalConnections += 1
-            statistics.activeConnections = activeConnections.count
-
-            // Remove connection when done
-            connection.onComplete = { [weak self] result in
-                Task {
-                    await self?.connectionDidComplete(connectionID, result: result)
-                }
-            }
-
-            // Handle the connection
-            await connection.start()
-
-        } catch {
-            os_log(.error, log: logger, "Failed to handle connection \(connectionID): \(error.localizedDescription)")
-
-            // Ensure connection is removed from active connections on error
-            if connectionAdded {
-                activeConnections.removeValue(forKey: connectionID)
-                statistics.activeConnections = activeConnections.count
-                statistics.failedConnections += 1
-            }
-
-            nwConnection.cancel()
+        case .socks5:
+            connection = SOCKS5ProxyConnection(
+                id: connectionID,
+                nwConnection: nwConnection,
+                configuration: configuration,
+                connectionPool: connectionPool,
+                sslHandler: sslHandler,
+                retryHandler: retryHandler,
+                logger: logger
+            )
         }
+
+        // Store active connection
+        activeConnections[connectionID] = connection
+
+        // Update statistics
+        statistics.totalConnections += 1
+        statistics.activeConnections = activeConnections.count
+
+        // Remove connection when done
+        connection.onComplete = { [weak self] result in
+            Task {
+                await self?.connectionDidComplete(connectionID, result: result)
+            }
+        }
+
+        // Handle the connection
+        await connection.start()
     }
 
     private func connectionDidComplete(_ id: UUID, result: ConnectionResult) {
