@@ -125,7 +125,7 @@ public actor RateLimiter {
 
     /// Check if request is allowed under rate limit
     public func checkRateLimit(tokens: Int = 1) async -> Bool {
-        await refillTokens()
+        refillTokens()
 
         guard availableTokens >= Double(tokens) else {
             os_log(.debug, log: logger, "Rate limit exceeded, available: %f, needed: %d", availableTokens, tokens)
@@ -584,10 +584,11 @@ public actor SystemResourceMonitor {
     public func startMonitoring() {
         stopMonitoring()
 
-        monitoringTask = Task {
+        let interval = updateInterval
+        monitoringTask = Task { [weak self] in
             while !Task.isCancelled {
-                await updateMetrics()
-                try? await Task.sleep(nanoseconds: UInt64(updateInterval * 1_000_000_000))
+                await self?.updateMetrics()
+                try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
             }
         }
 

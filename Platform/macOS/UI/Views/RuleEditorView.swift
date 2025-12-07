@@ -465,8 +465,8 @@ final class RuleEditorViewModel: ObservableObject {
 
 // MARK: - Preview
 #Preview("New Rule") {
-    RuleEditorView { rule in
-        print("Saved rule: \(rule.name)")
+    RuleEditorView { _ in
+        // Preview callback
     }
 }
 
@@ -478,7 +478,7 @@ final class RuleEditorViewModel: ObservableObject {
         action: .reject,
         priority: 90,
         notes: "Block advertising domains"
-    )) { rule in
-        print("Updated rule: \(rule.name)")
+    )) { _ in
+        // Preview callback
     }
 }

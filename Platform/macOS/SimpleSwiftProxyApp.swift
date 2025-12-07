@@ -1,4 +1,6 @@
 import SwiftUI
+import OSLog
+import SwiftProxyCore
 
 // Note: This is a simplified prototype version - @main is disabled in favor of SwiftProxyApp
 // @main
@@ -486,14 +488,14 @@ class SimpleProxyViewModel: ObservableObject {
     func toggleProxy(_ enabled: Bool) {
         // Mock proxy toggle
         if enabled {
-            print("Proxy enabled on port 8888")
+            os_log(.info, log: Logger.proxyLog, "Proxy enabled on port 8888")
         } else {
-            print("Proxy disabled")
+            os_log(.info, log: Logger.proxyLog, "Proxy disabled")
         }
     }
 
     func saveConfiguration(port: String, protocol: String) {
-        print("Configuration saved: Port \(port), Protocol \(`protocol`)")
+        os_log(.info, log: Logger.storageLog, "Configuration saved: Port %@, Protocol %@", port, `protocol`)
     }
 
     enum ViewType {

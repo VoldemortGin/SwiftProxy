@@ -266,7 +266,7 @@ public actor BackupService {
 
     private func cleanupOldBackups() async {
         do {
-            var backups = try await listBackups()
+            let backups = try await listBackups()
 
             // Keep manual backups, only cleanup automatic ones
             let automaticBackups = backups.filter { $0.type == .automatic }

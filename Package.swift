@@ -49,10 +49,6 @@ let package = Package(
             name: "SimpleSwiftProxy",
             dependencies: ["SwiftProxyCore"],
             path: "Platform/macOS",
-            exclude: [
-                "UI/Views/BackupRestoreView.swift.disabled",
-                "UI/ViewModels/BackupRestoreViewModel.swift.disabled"
-            ],
             swiftSettings: [
                 .unsafeFlags(["-warnings-as-errors"], .when(configuration: .release))
             ]

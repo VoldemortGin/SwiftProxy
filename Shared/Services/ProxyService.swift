@@ -614,19 +614,4 @@ public final class ProxyService: ProxyServiceProtocol {
 
 }
 
-// MARK: - DispatchQueue Extension
-
-extension DispatchQueue {
-    func sync<T>(_ work: @escaping () throws -> T) async throws -> T {
-        return try await withCheckedThrowingContinuation { continuation in
-            self.async {
-                do {
-                    let result = try work()
-                    continuation.resume(returning: result)
-                } catch {
-                    continuation.resume(throwing: error)
-                }
-            }
-        }
-    }
-}
+// NOTE: DispatchQueue extension moved to Shared/Core/Utils/DispatchQueueExtensions.swift

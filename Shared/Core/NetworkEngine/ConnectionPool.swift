@@ -224,10 +224,7 @@ public actor ConnectionPool {
 
         if useTLS {
             let tlsOptions = NWProtocolTLS.Options()
-
-            // Configure TLS options
-            let securityOptions = tlsOptions.securityProtocolOptions
-
+            // TLS options configured with defaults
             parameters = NWParameters(tls: tlsOptions, tcp: tcpOptions)
         } else {
             parameters = NWParameters(tls: nil, tcp: tcpOptions)

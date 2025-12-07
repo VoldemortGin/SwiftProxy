@@ -136,7 +136,7 @@ public actor AccessibilityAnnouncer {
     public func announce(_ message: String, after delay: TimeInterval, priority: AccessibilityPriority = .default) {
         Task {
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
-            await announce(message, priority: priority)
+            announce(message, priority: priority)
         }
     }
 }

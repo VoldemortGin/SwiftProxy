@@ -105,7 +105,7 @@ public final class StatisticsService: StatisticsServiceProtocol {
                 self.statisticsSubject.send(stats)
 
                 // Update session stats
-                var session = stats.session
+                let session = stats.session
                 self.sessionStatsSubject.send(session)
 
                 os_log(.debug, log: self.logger, "Recorded connection: %@", connection.id.uuidString)
@@ -454,32 +454,4 @@ public struct StatisticsReport: Codable {
     }
 }
 
-// MARK: - DispatchQueue Async Extension
-
-extension DispatchQueue {
-    func sync<T>(_ work: @escaping () async -> T) async -> T {
-        await withCheckedContinuation { continuation in
-            self.async {
-                Task {
-                    let result = await work()
-                    continuation.resume(returning: result)
-                }
-            }
-        }
-    }
-
-    func sync<T>(_ work: @escaping () async throws -> T) async throws -> T {
-        try await withCheckedThrowingContinuation { continuation in
-            self.async {
-                Task {
-                    do {
-                        let result = try await work()
-                        continuation.resume(returning: result)
-                    } catch {
-                        continuation.resume(throwing: error)
-                    }
-                }
-            }
-        }
-    }
-}
+// NOTE: DispatchQueue extension moved to Shared/Core/Utils/DispatchQueueExtensions.swift
