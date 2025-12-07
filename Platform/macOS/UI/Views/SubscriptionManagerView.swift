@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftProxyCore
 
 /// 订阅管理视图
 /// 管理所有订阅源和代理节点

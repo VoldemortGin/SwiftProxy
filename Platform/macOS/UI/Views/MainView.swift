@@ -6,6 +6,7 @@ import SwiftProxyCore
 struct MainView: View {
     // MARK: - Properties
     @StateObject private var viewModel: MainViewModel
+    @StateObject private var subscriptionViewModel: SubscriptionViewModel
     private let ruleService: RuleServiceProtocol
     @State private var selectedTab: Tab = .proxy
 
@@ -13,6 +14,10 @@ struct MainView: View {
     init(viewModel: MainViewModel, ruleService: RuleServiceProtocol) {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.ruleService = ruleService
+
+        // Initialize subscription service and view model
+        let subscriptionService = try! SubscriptionService()
+        _subscriptionViewModel = StateObject(wrappedValue: SubscriptionViewModel(subscriptionService: subscriptionService))
     }
 
     // MARK: - Body
@@ -93,6 +98,8 @@ struct MainView: View {
         switch selectedTab {
         case .proxy:
             ProxyConfigView(viewModel: viewModel)
+        case .subscriptions:
+            SubscriptionManagerView(viewModel: subscriptionViewModel)
         case .connections:
             ConnectionListView(viewModel: viewModel)
         case .statistics:
@@ -182,6 +189,7 @@ struct MainView: View {
 // MARK: - Tab Definition
 enum Tab: String, CaseIterable, Identifiable {
     case proxy
+    case subscriptions
     case connections
     case statistics
     case settings
@@ -192,6 +200,8 @@ enum Tab: String, CaseIterable, Identifiable {
         switch self {
         case .proxy:
             return "Proxy"
+        case .subscriptions:
+            return "Subscriptions"
         case .connections:
             return "Connections"
         case .statistics:
@@ -205,6 +215,8 @@ enum Tab: String, CaseIterable, Identifiable {
         switch self {
         case .proxy:
             return "network"
+        case .subscriptions:
+            return "arrow.down.circle"
         case .connections:
             return "list.bullet"
         case .statistics:

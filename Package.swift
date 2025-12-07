@@ -24,10 +24,16 @@ let package = Package(
             targets: ["SimpleSwiftProxy"]
         )
     ],
+    dependencies: [
+        .package(url: "https://github.com/jpsim/Yams.git", from: "5.0.0")
+    ],
     targets: [
         // MARK: - Shared Core Library (Cross-Platform)
         .target(
             name: "SwiftProxyCore",
+            dependencies: [
+                .product(name: "Yams", package: "Yams")
+            ],
             path: "Shared",
             sources: [
                 "Core/",

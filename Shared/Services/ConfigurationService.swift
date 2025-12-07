@@ -88,7 +88,7 @@ public final class ConfigurationService: ConfigurationServiceProtocol {
     // MARK: - CRUD Operations
 
     public func loadConfigurations() async throws -> [ProxyConfiguration] {
-        try await stateQueue.sync {
+        try await stateQueue.syncThrowing {
             try await self.loadConfigurationsAsync()
         }
     }
@@ -102,7 +102,7 @@ public final class ConfigurationService: ConfigurationServiceProtocol {
             throw AppError.proxyConfigurationInvalid(validation.errorMessage ?? "Validation failed")
         }
 
-        try await stateQueue.sync {
+        try await stateQueue.syncThrowing {
             // Add or update in cache
             self.cachedConfigurations[configuration.id] = configuration
 
@@ -142,7 +142,7 @@ public final class ConfigurationService: ConfigurationServiceProtocol {
     public func deleteConfiguration(id: UUID) async throws {
         os_log(.info, log: logger, "Deleting configuration: %@", id.uuidString)
 
-        try await stateQueue.sync {
+        try await stateQueue.syncThrowing {
             // Remove from cache
             guard self.cachedConfigurations.removeValue(forKey: id) != nil else {
                 throw AppError.proxyConfigurationInvalid("Configuration not found")

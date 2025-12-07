@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import OSLog
+import SwiftProxyCore
 
 /// 订阅管理视图模型
 /// 连接订阅服务和 UI 层
@@ -8,7 +9,7 @@ import OSLog
 public class SubscriptionViewModel: ObservableObject {
     // MARK: - Published Properties
 
-    @Published public var subscriptions: [Subscription] = []
+    @Published public var subscriptions: [SwiftProxyCore.Subscription] = []
     @Published public var allNodes: [ProxyNode] = []
     @Published public var isLoading = false
     @Published public var errorMessage: String?
@@ -78,7 +79,7 @@ public class SubscriptionViewModel: ObservableObject {
     }
 
     /// 更新订阅
-    public func updateSubscription(_ subscription: Subscription) {
+    public func updateSubscription(_ subscription: SwiftProxyCore.Subscription) {
         Task {
             isLoading = true
             errorMessage = nil
@@ -128,7 +129,7 @@ public class SubscriptionViewModel: ObservableObject {
     }
 
     /// 批量测试节点
-    public func testAllNodes(for subscription: Subscription) async {
+    public func testAllNodes(for subscription: SwiftProxyCore.Subscription) async {
         for node in subscription.nodes {
             await testNode(node.id)
         }

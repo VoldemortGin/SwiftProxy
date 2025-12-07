@@ -175,17 +175,36 @@ public actor ConnectionPool {
     private func isConnectionHealthy(_ connection: NWConnection) async -> Bool {
         // Check connection state
         let state = await withCheckedContinuation { continuation in
-            var currentState: NWConnection.State?
+            // Thread-safe state wrapper
+            final class StateWrapper: @unchecked Sendable {
+                private let lock = NSLock()
+                private var _currentState: NWConnection.State?
+
+                var currentState: NWConnection.State? {
+                    get {
+                        lock.lock()
+                        defer { lock.unlock() }
+                        return _currentState
+                    }
+                    set {
+                        lock.lock()
+                        defer { lock.unlock() }
+                        _currentState = newValue
+                    }
+                }
+            }
+
+            let stateWrapper = StateWrapper()
 
             connection.stateUpdateHandler = { state in
-                if currentState == nil {
-                    currentState = state
+                if stateWrapper.currentState == nil {
+                    stateWrapper.currentState = state
                     continuation.resume(returning: state)
                 }
             }
 
             // If we already have a state, return it
-            if let state = currentState {
+            if let state = stateWrapper.currentState {
                 continuation.resume(returning: state)
             }
         }

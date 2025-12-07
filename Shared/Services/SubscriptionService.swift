@@ -310,7 +310,7 @@ public final class SubscriptionService: SubscriptionServiceProtocol, @unchecked 
 
             guard self.fileManager.fileExists(atPath: fileURL.path) else {
                 os_log(.info, log: self.logger, "No saved subscriptions found")
-                return nil
+                return nil as [Subscription]?
             }
 
             let data = try Data(contentsOf: fileURL)

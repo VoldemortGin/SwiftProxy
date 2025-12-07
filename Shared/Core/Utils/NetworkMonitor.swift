@@ -347,30 +347,50 @@ public final class ReachabilityChecker {
         return await withCheckedContinuation { continuation in
             let endpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(host), port: NWEndpoint.Port(rawValue: port)!)
             let connection = NWConnection(to: endpoint, using: .tcp)
-            var didResume = false
+
+            // Thread-safe state wrapper
+            final class ResumeState: @unchecked Sendable {
+                private let lock = NSLock()
+                private var _didResume = false
+
+                var didResume: Bool {
+                    get {
+                        lock.lock()
+                        defer { lock.unlock() }
+                        return _didResume
+                    }
+                    set {
+                        lock.lock()
+                        defer { lock.unlock() }
+                        _didResume = newValue
+                    }
+                }
+            }
+
+            let state = ResumeState()
 
             // Create cancellable timeout work item
             let timeoutWork = DispatchWorkItem {
-                guard !didResume else { return }
-                didResume = true
+                guard !state.didResume else { return }
+                state.didResume = true
                 connection.cancel()
                 continuation.resume(returning: false)
             }
 
             DispatchQueue.global().asyncAfter(deadline: .now() + timeout, execute: timeoutWork)
 
-            connection.stateUpdateHandler = { state in
-                guard !didResume else { return }
+            connection.stateUpdateHandler = { connectionState in
+                guard !state.didResume else { return }
 
-                switch state {
+                switch connectionState {
                 case .ready:
-                    didResume = true
+                    state.didResume = true
                     timeoutWork.cancel()  // Cancel the timeout
                     connection.cancel()
                     continuation.resume(returning: true)
 
                 case .failed, .cancelled:
-                    didResume = true
+                    state.didResume = true
                     timeoutWork.cancel()  // Cancel the timeout
                     connection.cancel()
                     continuation.resume(returning: false)

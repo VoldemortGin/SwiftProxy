@@ -205,45 +205,39 @@ public final class StatisticsService: StatisticsServiceProtocol {
     public func saveStatistics() async throws {
         let stats = await getStatistics()
 
-        try await stateQueue.sync { [self] in
-            try await Task { @MainActor in
-                let encoder = JSONEncoder()
-                encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-                encoder.dateEncodingStrategy = .iso8601
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
 
-                let data = try encoder.encode(stats)
+        let data = try encoder.encode(stats)
 
-                let fileURL = self.storageURL.appendingPathComponent("statistics.json")
-                try data.write(to: fileURL, options: [.atomic])
+        let fileURL = self.storageURL.appendingPathComponent("statistics.json")
+        try data.write(to: fileURL, options: [.atomic])
 
-                os_log(.debug, log: self.logger, "Statistics saved to disk")
-            }.value
-        }
+        os_log(.debug, log: self.logger, "Statistics saved to disk")
     }
 
     public func loadStatistics() async throws {
-        try await stateQueue.sync { [self] in
-            try await Task { @MainActor in
-                let fileURL = self.storageURL.appendingPathComponent("statistics.json")
+        let fileURL = self.storageURL.appendingPathComponent("statistics.json")
 
-                guard self.fileManager.fileExists(atPath: fileURL.path) else {
-                    os_log(.info, log: self.logger, "No saved statistics found")
-                    return
-                }
-
-                let data = try Data(contentsOf: fileURL)
-
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .iso8601
-
-                let stats = try decoder.decode(Statistics.self, from: data)
-
-                self.statisticsSubject.send(stats)
-                self.sessionStatsSubject.send(stats.session)
-
-                os_log(.info, log: self.logger, "Statistics loaded from disk")
-            }.value
+        guard self.fileManager.fileExists(atPath: fileURL.path) else {
+            os_log(.info, log: self.logger, "No saved statistics found")
+            return
         }
+
+        let data = try Data(contentsOf: fileURL)
+
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+
+        let stats = try decoder.decode(Statistics.self, from: data)
+
+        await MainActor.run {
+            self.statisticsSubject.send(stats)
+            self.sessionStatsSubject.send(stats.session)
+        }
+
+        os_log(.info, log: self.logger, "Statistics loaded from disk")
     }
 
     public func exportStatistics() async throws -> Data {
@@ -284,10 +278,20 @@ public final class StatisticsService: StatisticsServiceProtocol {
     }
 
     private func setupAutoSave() async {
+        // Create a sendable-safe wrapper for the service reference
+        final class ServiceBox: @unchecked Sendable {
+            weak var service: StatisticsService?
+            init(_ service: StatisticsService) {
+                self.service = service
+            }
+        }
+
+        let box = ServiceBox(self)
+
         await MainActor.run { [self] in
-            self.autoSaveTimer = Timer.scheduledTimer(withTimeInterval: self.autoSaveInterval, repeats: true) { [weak self] _ in
+            self.autoSaveTimer = Timer.scheduledTimer(withTimeInterval: self.autoSaveInterval, repeats: true) { _ in
                 Task {
-                    try? await self?.saveStatistics()
+                    try? await box.service?.saveStatistics()
                 }
             }
 

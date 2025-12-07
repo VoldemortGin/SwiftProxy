@@ -249,16 +249,8 @@ public final class ProxyService: ProxyServiceProtocol {
     // MARK: - System Proxy Operations
 
     public func getCurrentSystemProxy() async throws -> SystemProxySettings {
-        return try await withCheckedThrowingContinuation { continuation in
-            stateQueue.async {
-                do {
-                    let settings = try self.readSystemProxySettings()
-                    continuation.resume(returning: settings)
-                } catch {
-                    continuation.resume(throwing: error)
-                }
-            }
-        }
+        // Since readSystemProxySettings() is nonisolated, we can call it directly
+        return try readSystemProxySettings()
     }
 
     public func testConnection(configuration: ProxyConfiguration) async throws -> ConnectionTestResult {
@@ -374,7 +366,7 @@ public final class ProxyService: ProxyServiceProtocol {
 
     // MARK: - Private Methods
 
-    private func readSystemProxySettings() throws -> SystemProxySettings {
+    nonisolated private func readSystemProxySettings() throws -> SystemProxySettings {
         #if os(macOS)
         guard let dynamicStore = SCDynamicStoreCreate(nil, "SwiftProxy" as CFString, nil, nil) else {
             throw AppError.proxyConnectionFailed("Failed to create SCDynamicStore")
