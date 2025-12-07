@@ -25,9 +25,8 @@ final class ConfigurationServiceTests: XCTestCase {
         mockKeychain = MockConfigKeychain()
         cancellables = Set<AnyCancellable>()
 
-        // Create mock keychain service
-        let keychainService = MockKeychainService()
-        try sut = ConfigurationService(keychainService: keychainService)
+        // Create configuration service (no keychain needed)
+        sut = try ConfigurationService()
     }
 
     override func tearDownWithError() throws {
@@ -356,37 +355,3 @@ class MockConfigKeychain {
     }
 }
 
-// MARK: - Mock Keychain Service
-
-class MockKeychainService: KeychainServiceProtocol {
-    private var storage: [String: String] = [:]
-
-    func savePassword(_ password: String, for identifier: String) async throws {
-        storage[identifier] = password
-    }
-
-    func loadPassword(for identifier: String) async throws -> String? {
-        return storage[identifier]
-    }
-
-    func deletePassword(for identifier: String) async throws {
-        storage.removeValue(forKey: identifier)
-    }
-
-    func deleteAllPasswords() async throws {
-        storage.removeAll()
-    }
-
-    func passwordExists(for identifier: String) async -> Bool {
-        return storage[identifier] != nil
-    }
-
-    func migratePasswords(_ migrations: [String: String]) async throws {
-        for (oldIdentifier, newIdentifier) in migrations {
-            if let password = storage[oldIdentifier] {
-                storage[newIdentifier] = password
-                storage.removeValue(forKey: oldIdentifier)
-            }
-        }
-    }
-}

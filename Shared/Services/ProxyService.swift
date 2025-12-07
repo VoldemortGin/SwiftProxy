@@ -344,10 +344,7 @@ public final class ProxyService: ProxyServiceProtocol {
                 throw AppError.dataEncodingFailed
             }
 
-            // Save password to Keychain if present
-            if let password = configuration.password {
-                try self.savePasswordToKeychain(password, for: configuration.id)
-            }
+            // Password is now stored directly in configuration (via UserDefaults)
         }
     }
 
@@ -366,8 +363,7 @@ public final class ProxyService: ProxyServiceProtocol {
                 UserDefaults.standard.set(encoded, forKey: self.configurationsKey)
                 self.cachedConfigurations = configurations
 
-                // Delete password from Keychain
-                try? self.deletePasswordFromKeychain(for: id)
+                // Password is deleted with configuration (stored in UserDefaults)
 
                 os_log(.debug, log: self.logger, "Deleted configuration: %@", id.uuidString)
             } else {
@@ -591,17 +587,11 @@ public final class ProxyService: ProxyServiceProtocol {
 
     private func loadConfigurationsSync() throws -> [ProxyConfiguration] {
         guard let data = UserDefaults.standard.data(forKey: configurationsKey),
-              var configurations = try? JSONDecoder().decode([ProxyConfiguration].self, from: data) else {
+              let configurations = try? JSONDecoder().decode([ProxyConfiguration].self, from: data) else {
             return []
         }
 
-        // Load passwords from Keychain
-        for index in configurations.indices {
-            if let password = try? loadPasswordFromKeychain(for: configurations[index].id) {
-                configurations[index].password = password
-            }
-        }
-
+        // Password is now stored directly in configuration
         cachedConfigurations = configurations
         return configurations
     }
@@ -614,67 +604,14 @@ public final class ProxyService: ProxyServiceProtocol {
 
     private func loadLastActiveConfiguration() async throws -> ProxyConfiguration? {
         guard let data = UserDefaults.standard.data(forKey: lastActiveConfigKey),
-              var configuration = try? JSONDecoder().decode(ProxyConfiguration.self, from: data) else {
+              let configuration = try? JSONDecoder().decode(ProxyConfiguration.self, from: data) else {
             return nil
         }
 
-        // Load password from Keychain
-        if let password = try? loadPasswordFromKeychain(for: configuration.id) {
-            configuration.password = password
-        }
-
+        // Password is stored directly in configuration
         return configuration
     }
 
-    // MARK: - Keychain Operations
-
-    private func savePasswordToKeychain(_ password: String, for id: UUID) throws {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: id.uuidString,
-            kSecAttrService as String: "SwiftProxyPassword",
-            kSecValueData as String: password.data(using: .utf8)!
-        ]
-
-        // Delete existing
-        SecItemDelete(query as CFDictionary)
-
-        // Add new
-        let status = SecItemAdd(query as CFDictionary, nil)
-        guard status == errSecSuccess else {
-            throw AppError.keychainAccessFailed("Failed to save password: \(status)")
-        }
-    }
-
-    private func loadPasswordFromKeychain(for id: UUID) throws -> String? {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: id.uuidString,
-            kSecAttrService as String: "SwiftProxyPassword",
-            kSecReturnData as String: true
-        ]
-
-        var result: AnyObject?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
-
-        guard status == errSecSuccess,
-              let data = result as? Data,
-              let password = String(data: data, encoding: .utf8) else {
-            return nil
-        }
-
-        return password
-    }
-
-    private func deletePasswordFromKeychain(for id: UUID) throws {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: id.uuidString,
-            kSecAttrService as String: "SwiftProxyPassword"
-        ]
-
-        SecItemDelete(query as CFDictionary)
-    }
 }
 
 // MARK: - DispatchQueue Extension
