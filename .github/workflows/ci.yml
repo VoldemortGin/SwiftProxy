@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: macos-14
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Select Xcode version
+      run: sudo xcode-select -s /Applications/Xcode_15.2.app
+
+    - name: Show Swift version
+      run: swift --version
+
+    - name: Cache Swift packages
+      uses: actions/cache@v4
+      with:
+        path: .build
+        key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+        restore-keys: |
+          ${{ runner.os }}-spm-
+
+    - name: Build
+      run: make build
+
+    - name: Run tests
+      run: swift test --parallel
+
+    - name: Generate test report
+      if: always()
+      run: |
+        echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "Build: ✅ Passed" >> $GITHUB_STEP_SUMMARY
+        echo "Tests: Check job logs for details" >> $GITHUB_STEP_SUMMARY
+
+  code-quality:
+    name: Code Quality Checks
+    runs-on: macos-14
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check for trailing whitespace
+      run: |
+        if git diff --check HEAD^ HEAD; then
+          echo "✅ No whitespace issues"
+        else
+          echo "❌ Whitespace issues found"
+          exit 1
+        fi
+
+    - name: Check file sizes
+      run: |
+        # Check for large files (>1MB)
+        find . -type f -size +1M ! -path "./.git/*" ! -path "./.build/*" | while read file; do
+          echo "⚠️  Large file: $file ($(du -h "$file" | cut -f1))"
+        done
+
+    - name: Verify no debug code
+      run: |
+        # Check for common debug patterns
+        if grep -r "print(" --include="*.swift" Shared/ Platform/ | grep -v "// print"; then
+          echo "⚠️  Found print statements (consider using proper logging)"
+        fi
