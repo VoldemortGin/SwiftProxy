@@ -145,8 +145,9 @@ public final class StatisticsViewModel: ObservableObject {
 
     private func startAutoRefresh() {
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
             Task { @MainActor in
-                await self?.loadStatistics()
+                await self.loadStatistics()
             }
         }
     }
