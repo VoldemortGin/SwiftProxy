@@ -116,12 +116,16 @@ public actor SSLHandler {
         sec_protocol_options_set_verify_block(
             tlsOptions.securityProtocolOptions,
             { [weak self] metadata, trust, completionHandler in
+                guard let self = self else {
+                    completionHandler(false)
+                    return
+                }
                 Task {
-                    let result = await self?.verifyServerTrust(
+                    let result = await self.verifyServerTrust(
                         metadata: metadata,
                         trust: trust,
                         host: host
-                    ) ?? false
+                    )
                     completionHandler(result)
                 }
             },

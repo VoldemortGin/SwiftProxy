@@ -137,14 +137,17 @@ public struct WebSocketFrame {
             guard data.count >= offset + 8 else {
                 throw WebSocketError.incompleteFrame
             }
-            payloadLength = UInt64(data[offset]) << 56 |
-                           UInt64(data[offset + 1]) << 48 |
-                           UInt64(data[offset + 2]) << 40 |
-                           UInt64(data[offset + 3]) << 32 |
-                           UInt64(data[offset + 4]) << 24 |
-                           UInt64(data[offset + 5]) << 16 |
-                           UInt64(data[offset + 6]) << 8 |
-                           UInt64(data[offset + 7])
+            // Parse 64-bit payload length (big-endian)
+            var length: UInt64 = 0
+            length |= UInt64(data[offset]) << 56
+            length |= UInt64(data[offset + 1]) << 48
+            length |= UInt64(data[offset + 2]) << 40
+            length |= UInt64(data[offset + 3]) << 32
+            length |= UInt64(data[offset + 4]) << 24
+            length |= UInt64(data[offset + 5]) << 16
+            length |= UInt64(data[offset + 6]) << 8
+            length |= UInt64(data[offset + 7])
+            payloadLength = length
             offset += 8
         } else {
             payloadLength = UInt64(payloadLen)

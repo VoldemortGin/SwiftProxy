@@ -74,11 +74,17 @@ public actor ProxyServer {
 
             // Start receiving connections
             listener.stateUpdateHandler = { [weak self] state in
-                Task { await self?.handleListenerState(state) }
+                guard let self = self else { return }
+                Task { @MainActor in
+                    await self.handleListenerState(state)
+                }
             }
 
             listener.newConnectionHandler = { [weak self] connection in
-                Task { await self?.handleNewConnection(connection) }
+                guard let self = self else { return }
+                Task { @MainActor in
+                    await self.handleNewConnection(connection)
+                }
             }
 
             listener.start(queue: connectionQueue)
@@ -211,8 +217,9 @@ public actor ProxyServer {
 
         // Remove connection when done
         connection.onComplete = { [weak self] result in
-            Task {
-                await self?.connectionDidComplete(connectionID, result: result)
+            guard let self = self else { return }
+            Task { @MainActor in
+                await self.connectionDidComplete(connectionID, result: result)
             }
         }
 
