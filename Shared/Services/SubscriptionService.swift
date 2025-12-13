@@ -124,9 +124,10 @@ public final class SubscriptionService: SubscriptionServiceProtocol, @unchecked 
         }
 
         // 添加到列表
+        let finalSubscription = subscription // Create immutable copy for capture
         await MainActor.run {
             var subs = self.subscriptionsSubject.value
-            subs.append(subscription)
+            subs.append(finalSubscription)
             self.subscriptionsSubject.send(subs)
             self.updateAllNodes()
         }
