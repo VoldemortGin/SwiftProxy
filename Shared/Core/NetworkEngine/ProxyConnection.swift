@@ -416,7 +416,7 @@ public actor ConnectionManager {
 // MARK: - Connection Pool Entry
 // MARK: - Connection Extensions
 
-extension NWConnection.State: CustomStringConvertible {
+extension NWConnection.State: @retroactive CustomStringConvertible {
     public var description: String {
         switch self {
         case .setup:
